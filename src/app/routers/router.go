@@ -17,12 +17,17 @@ func init() {
 	//json形式的接口
 	//文档启动命令  bee run -gendoc=true -downdoc=true
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/user",
-			//beego.NSCond(FilterToken),
+		//beego.NSCond(FilterToken),
+		   beego.NSNamespace("/user",
 		    	beego.NSInclude(
 			    	&admin.UserController{},
 		    	),
 	     	),
+		   beego.NSNamespace("/book",
+			    beego.NSInclude(
+				   &admin.BooksController{},
+			   ),
+		   ),
 	)
 	beego.AddNamespace(ns)
 

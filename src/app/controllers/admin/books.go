@@ -2,12 +2,11 @@ package admin
 
 import (
 	comm "app/common/conndatabase"
+	"github.com/astaxie/beego/validation"
 	"app/common"
 	"app/models"
 	"fmt"
 	"time"
-	"github.com/astaxie/beego/validation"
-	"log"
 )
 //  后台书籍 API
 type BooksController struct {
@@ -71,7 +70,7 @@ func (this *BooksController) BookList() {
 		starttime = fmt.Sprintf("%d",tm1)
 		conditions+= " and created_at  bettwen "+starttime+" and "+endtime
 	}
-	var books []models.BookInfo
+	var books []models.Books
 	conditions += "  order by created_at desc"
 	var  TableName = "lb_books"
 	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions)
@@ -97,14 +96,14 @@ func (this *BooksController) BookList() {
 // @Failure 500 服务器错误!
 // @router /bookadd [post]
 func (this *BooksController) Bookadd() {
-	model := models.BookInfo{}
+	model := models.Books{}
 	Uid := models.GetID()
 	model.Bookid   =  fmt.Sprintf("%d", Uid)
 	model.Bookname = this.GetString("bookname")
 	model.Author  = this.GetString("author")
 	model.Imagehead = this.GetString("imageback")
 	model.Imageback = this.GetString("imageback")
-	model.ImageUrl  = this.GetString("imgurl")
+	model.Imageurl  = this.GetString("imgurl")
 	model.Isbn = this.GetString("isbn")
 	model.Describe = this.GetString("describe")
 	model.Price,_ = this.GetUint16("price")
@@ -148,7 +147,7 @@ func (this *BooksController) Bookadd() {
 // @Failure 500 服务器错误!
 // @router /bookupdate [post]
 func (this *BooksController) Bookupdate(){
-	model := models.BookInfo{}
+	model := models.Books{}
 	model.Bookid = this.GetString("bookid")
 	valid := validation.Validation{}
 	valid.Required(model.Bookid,  "bookid").Message("书籍编号不能为空！")
@@ -177,7 +176,7 @@ func (this *BooksController) Bookupdate(){
 		}
 		Imgurl := this.GetString("imgurl")
 		if Imgurl != ""{
-			model.ImageUrl = Imgurl
+			model.Imageurl = Imgurl
 		}
 		isbn := this.GetString("Barcode")
 		if isbn != ""{
