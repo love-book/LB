@@ -1,0 +1,55 @@
+package models
+
+import(
+	"github.com/astaxie/beego/validation"
+	"log"
+)
+
+type  User struct {
+	Userid  int64	`json:"userid" orm:"pk;size(20);column(userid);"`
+	Openid  string  `json:"openid" orm:"size(50);"`
+	Wnickname  string `json:"wnickname" orm:"size(50);"`
+	Wimgurl    string `json:"wimgurl" orm:"size(150);"`
+	Nickname  string `json:"nickname" orm:"size(50);"`
+	Imgurl    string `json:"imgurl" orm:"size(255);"`
+	Gender  int8  `json:"gender" orm:"size(1);"`
+	Age   int32 `json:"age" orm:"size(11);"`
+	Telphone  int32  `json:"telphone" orm:"size(11);"`
+	Qq  string  `json:"qq" orm:"size(50);"`
+	Weino  string  `json:"weibo" orm:"size(50);"`
+	Signature  string  `json:"signature" orm:"size(255);"`
+	Address  string  `json:"address" orm:"size(255);"`
+	Created_at  int64  `json:"created_at" orm:"size(11);"`
+	Updated_at  int64  `json:"updated_at" orm:"size(11);"`
+}
+//添加用户验证
+func (a User) InsertValidation() error {
+	valid := validation.Validation{}
+	valid.Required(a.Userid,  "userid").Message("用户编号不能为空！")
+	valid.Required(a.Nickname, "nickname").Message("用户昵称不能为空！")
+	valid.MaxSize(a.Nickname,50,"nickname").Message("用户昵称不大于50个字符！")
+	valid.MinSize(a.Nickname,5,"nickname").Message("用户昵称不小于5个字符！")
+	//valid.Range(a.Age, 0, 100, "age").Message("年龄不符合范围！")
+	if valid.HasErrors() {
+		for _, err := range valid.Errors {
+			log.Println(err.Key, err.Message)
+			return err
+		}
+	}
+	return nil
+}
+//验证userid
+func (a User) UserValidation() error {
+	valid := validation.Validation{}
+	valid.Required(a.Userid,  "userid").Message("用户编号不能为空！")
+	if valid.HasErrors() {
+		for _, err := range valid.Errors {
+			log.Println(err.Key, err.Message)
+			return err
+		}
+	}
+	return nil
+}
+
+
+

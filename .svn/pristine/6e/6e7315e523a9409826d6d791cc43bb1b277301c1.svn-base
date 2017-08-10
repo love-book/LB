@@ -1,0 +1,30 @@
+package models
+
+import(
+	"github.com/go-ozzo/ozzo-validation"
+)
+
+type  User struct {
+	Userid  int64	`json:"用户编号" orm:"pk;size(20);column(userid);"`
+	Openid  string  `json:"Openid" orm:"size(50);"`
+	Wnickname  string `json:"微信昵称" orm:"size(50);"`
+	Wimgurl    string `json:"微信头像" orm:"size(150);"`
+	Nickname  string `json:"用户名" orm:"size(50);"`
+	Imgurl    string `json:"头像" orm:"size(255);"`
+	Regtime   int32  `json:"创建时间" orm:"size(11);"`
+	Gender  int8  `json:"性别" orm:"size(1);"`
+	Age   int32 `json:"年龄" orm:"size(11);"`
+	Telphone  int32  `json:"手机号" orm:"size(11);"`
+	Qq  string  `json:"QQ" orm:"size(50);"`
+	Weino  string  `json:"weibo" orm:"size(50);"`
+	Signature  string  `json:"签名" orm:"size(255);"`
+	address  string  `json:"地址" orm:"size(255);"`
+	Created_at  int32  `json:"创建时间" orm:"size(11);"`
+	Updated_at  int32  `json:"修改时间" orm:"size(11);"`
+}
+
+func (a User) Validate() error {
+	return validation.ValidateStruct(&a,
+		//validation.Field(&a.Username, validation.Required.Error("用户名不能为空"), validation.Length(5, 50 ).Error("用户名必须在5～50个字符之间")),
+	)
+}

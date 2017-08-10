@@ -1,0 +1,26 @@
+package routers
+
+import (
+	"github.com/astaxie/beego"
+	"app/controllers"
+)
+
+func init() {
+	//后台路由
+	beego.Router("/admin", &controllers.AdminController{}, "*:Index")
+	beego.Router("/admin/index", &controllers.AdminController{}, "*:Index")
+	beego.Router("/admin/signup", &controllers.AdminController{}, "*:Signup")
+	beego.Router("/admin/login", &controllers.AdminController{}, "*:Login")
+	beego.Router("/admin/logout", &controllers.AdminController{}, "*:Logout")
+
+	//前台路由
+	beego.Router("/", &controllers.SiteController{}, "*:Index")
+	beego.Router("/site/index", &controllers.SiteController{}, "*:Index")
+	beego.Router("/site/signup", &controllers.SiteController{}, "*:Signup")
+	beego.Router("/site/login", &controllers.SiteController{}, "*:Login")
+	beego.Router("/site/logout", &controllers.SiteController{}, "*:Logout")
+
+	//api路由
+	beego.Router("/api/index", &controllers.ApiController{}, "*:Index")
+	beego.Router("/api/redis", &controllers.ApiController{}, "*:Redis")
+}

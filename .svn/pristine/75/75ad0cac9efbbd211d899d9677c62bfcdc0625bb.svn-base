@@ -1,0 +1,142 @@
+package admin
+
+import (
+	"strings"
+	"github.com/astaxie/beego"
+	"html/template"
+	"fmt"
+)
+
+
+type responseCode struct {
+	Code int32 `json:"code"`
+	Message string `json:"message"`
+	Data  interface{} `json:"data"`
+}
+type recordsCode struct {
+	Draw int32 `json:"draw"`
+	RecordsTotal int32 `json:"recordsTotal"`
+	RecordsFiltered int32 `json:"recordsFiltered"`
+	Data  interface{} `json:"data"`
+}
+
+
+var (
+	Success_Code = responseCode{200,"成功!",""}
+	Error_Code   = responseCode{100,"失败!",""}
+	Record_Code  = recordsCode{1, 0,1,""}
+)
+
+
+type baseController struct {
+	beego.Controller
+	userid          int64
+	username        string
+	controller      string
+	action          string
+	layout          string
+	layoutSections  map[string]string
+	defaultController string
+	defaultAction    string
+}
+
+func (this *baseController) Prepare() {
+	controllerName, actionName := this.GetControllerAndAction()
+	this.defaultController = "admin"
+	this.defaultAction = "index"
+	this.controller = strings.ToLower(controllerName[0 : len(controllerName)-10])
+	this.action = strings.ToLower(actionName)
+	this.layout = "layouts/main.html"
+	this.layoutSections = make(map[string]string)
+	this.layoutSections["Header"]  = "layouts/header.html"
+	this.layoutSections["Left"]    = "layouts/left.html"
+	this.layoutSections["Content"] = "layouts/content.html"
+	this.layoutSections["Footer"]  = "layouts/footer.html"
+	this.layoutSections["Right"]   = "layouts/right.html"
+	this.Data["asset"]   = "/static/"
+	this.Data["xsrf_token"] = this.XSRFToken()
+	this.Data["xsrfdata"]   = template.HTML(this.XSRFFormHTML())
+	this.Data["asset"]   = "/static/"
+	this.Data["version"] = beego.AppConfig.String("AppVer")
+	this.Data["adminid"] = this.userid
+	this.Data["adminname"] = this.username
+	//this.auth()
+	//this.checkPermission()
+}
+
+//登录状态验证
+func (this *baseController) auth() {
+
+}
+
+
+//渲染模版(包含布局)
+func (this *baseController) render(tpl ...string) {
+	var tplname string
+	if len(tpl) == 1 {
+		tplname =   tpl[0] + ".html"
+	} else {
+		tplname =  this.controller + "/" + this.action + ".html"
+	}
+	this.LayoutSections = this.layoutSections
+	this.Layout  = this.layout
+	this.TplName = tplname
+}
+
+
+//渲染模版(不包含布局)
+func (this *baseController) renderPartial(tpl ...string) {
+	var tplname string
+	if len(tpl) == 1 {
+		tplname =  tpl[0] + ".html"
+	} else {
+		tplname =  this.controller + "/" + this.action + ".html"
+	}
+	this.TplName = tplname
+}
+
+//显示错误提示
+func (this *baseController) showMsg(msg ...string) {
+	if len(msg) == 1 {
+		msg = append(msg, this.Ctx.Request.Referer())
+	}
+	this.Data["msg"] = msg[0]
+	this.Data["redirect"] = msg[1]
+	this.Layout  = this.layout
+	this.TplName = "admin/error.html"
+	this.Render()
+	this.StopRun()
+}
+
+func (this *baseController) showTips( msg interface{} ){
+	this.TplName = "admin/tips.html"
+	this.Data["Form"] = fmt.Sprintf("%v",msg)
+}
+
+//json输出
+func (this * baseController) renderJson(Json interface{}) {
+	//Json := map[string]interface{}{"code":0,"msg": "成功!","data":"1111"}
+	this.Data["json"] = Json
+	this.ServeJSON()
+	this.StopRun()
+}
+
+//是否post提交
+func (this *baseController) isPost() bool {
+	return this.Ctx.Request.Method == "POST"
+}
+
+//获取用户IP地址
+func (this *baseController) getClientIp() string {
+	s := strings.Split(this.Ctx.Request.RemoteAddr, ":")
+	return s[0]
+}
+
+//权限验证
+func (this *baseController) checkPermission() {
+	if this.userid != 1 && this.controller == "user" {
+		this.showMsg("抱歉，只有超级管理员才能进行该操作！")
+	}
+}
+
+

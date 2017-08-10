@@ -1,0 +1,18 @@
+package controllers
+
+import (
+	"github.com/astaxie/beego"
+	jwt "app/common"
+)
+
+type apiBaseController struct {
+	beego.Controller
+}
+
+
+func (this * apiBaseController) verifyAccessToken(token string) bool  {
+	return jwt.VerifyToken(token)
+}
+
+
+

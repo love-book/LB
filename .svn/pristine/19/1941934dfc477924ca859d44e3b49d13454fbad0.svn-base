@@ -1,0 +1,56 @@
+package common
+
+import (
+	"crypto/sha1"
+	"strconv"
+	"time"
+	"errors"
+	"encoding/hex"
+	"fmt"
+	"github.com/astaxie/beego"
+)
+
+func GetAccessToken (uid string, os string) (str string , err error ) {
+	if len(uid) == 0 {
+		return "error", errors.New("uid is nil")
+	}
+
+	timestamp := time.Now().Unix()
+	week := time.Wednesday
+	num :=  timestamp % (int64(week)+1)
+	fmt.Println("week:",int64(week))
+	h := sha1.New()
+	h.Write([]byte(uid+strconv.Itoa(int(timestamp))+strconv.Itoa(int(num))+os))
+	fmt.Println("time:",timestamp)
+	strserc := strconv.Itoa(int(timestamp))+hex.EncodeToString(h.Sum(nil))+strconv.Itoa(int(num))
+	fmt.Println(strserc)
+	return strserc , nil
+}
+
+func VerifyAccessToken(token string,uid string,os string) bool  {
+	if len(token) == 0 || len(uid) == 0 {
+		return false
+	}
+	fmt.Println("verify")
+	timestamp := beego.Substr(token,0,10)
+	now := time.Now().Unix()
+	if now - int64(timestamp) > 3600 {
+		return  false
+	}
+
+	week := time.Wednesday
+	num ,_ := strconv.Atoi(timestamp)
+	num = num % (int(week)+1)
+
+	h := sha1.New()
+	h.Write([]byte(uid+timestamp+strconv.Itoa(int(num))+os))
+	ctoken := timestamp + hex.EncodeToString(h.Sum(nil))+strconv.Itoa(int(num))
+
+	fmt.Println(ctoken)
+	if token == ctoken {
+		return true
+	}else{
+		return false
+	}
+
+}

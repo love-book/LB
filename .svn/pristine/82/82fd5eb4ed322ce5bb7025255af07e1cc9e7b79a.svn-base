@@ -1,0 +1,12 @@
+package admin
+
+
+type BooksController struct {
+	baseController
+}
+
+//首页
+func (this *BooksController) Index() {
+
+
+}
