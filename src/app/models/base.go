@@ -84,7 +84,7 @@ func TableName(str string) string {
  */
 func GetPagesInfo(tableName string, start int, pagesize int, conditions string) (int, orm.RawSeter) {
 	if start <= 1 {
-		start = 1
+		start = 0
 	}
 	if pagesize == 0 {
 		pagesize = 15

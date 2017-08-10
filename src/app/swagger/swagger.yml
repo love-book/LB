@@ -95,16 +95,8 @@ paths:
         description: 图书编号
         type: string
       - in: formData
-        name: barcode
+        name: isbn
         description: 图书条形码
-        type: string
-      - in: formData
-        name: starttime
-        description: 开始时间
-        type: string
-      - in: formData
-        name: endtime
-        description: 结束时间
         type: string
       responses:
         "200":

@@ -6,7 +6,6 @@ import (
 	"app/common"
 	"app/models"
 	"fmt"
-	"time"
 )
 //  后台书籍 API
 type BooksController struct {
@@ -30,9 +29,7 @@ func (this *BooksController) Prepare() {
 // @Param   bookname  formData   string  false   "书名"
 // @Param   author    formData   string  false   "作者"
 // @Param   bookid    formData   string  false   "图书编号"
-// @Param   barcode    formData   string  false  "图书条形码"
-// @Param   starttime  formData   string  false  "开始时间"
-// @Param   endtime    formData   string  false  "结束时间"
+// @Param   isbn    formData   string  false  "图书条形码"
 // @Failure 500 服务器错误!
 // @router /booklist [post]
 func (this *BooksController) BookList() {
@@ -52,12 +49,12 @@ func (this *BooksController) BookList() {
 	if author !="" {
 		conditions+= " and author = "+author
 	}
-	barcode := this.GetString("barcode")
-	if barcode !="" {
-		conditions+= " and telphone = "+barcode
+	isbn := this.GetString("isbn")
+	if isbn !="" {
+		conditions+= " and isbn = "+isbn
 	}
+	/*
 	starttime := this.GetString("starttime")
-
 	if starttime !="" {
 		tm1, _ := time.Parse("01/02/2006", starttime)
 		endtime := this.GetString("endtime")
@@ -69,9 +66,9 @@ func (this *BooksController) BookList() {
 		}
 		starttime = fmt.Sprintf("%d",tm1)
 		conditions+= " and created_at  bettwen "+starttime+" and "+endtime
-	}
+	}*/
 	var books []models.Books
-	conditions += "  order by created_at desc"
+	conditions += "  order by bookid desc"
 	var  TableName = "lb_books"
 	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions)
 	res.QueryRows(&books)
