@@ -1,4 +1,4 @@
-package admin
+package controllers
 
 import (
 	comm "common/conndatabase"
@@ -8,16 +8,9 @@ import (
 	"fmt"
 	"strconv"
 )
-//  后台书籍 API
+
 type BooksController struct {
-	baseController
-}
-
-
-func (this *BooksController) Prepare() {
-	//关闭xsrf校验
-	this.EnableXSRF = false
-	this.EnableRender =false
+	ApiController
 }
 
 // @Title 获取图书列表

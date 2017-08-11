@@ -1,4 +1,4 @@
-package admin
+package controllers
 
 import (
 	comm "common/conndatabase"
@@ -10,32 +10,22 @@ import (
 
 // User API
 type UserController struct {
-	baseController
+	ApiController
 }
 
-func (this *UserController) Prepare() {
-	//关闭xsrf校验
-	this.EnableXSRF = false
-	this.EnableRender =false
-}
 
-// @Title 获取用户列表
-// @Summary  获取用户列表
-// @Description 获取用户列表
+// @Title 获取用户信息
+// @Summary  获取用户信息
+// @Description 获取用户信息
 // @Success 200  {<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname": "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl": "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号", <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address": "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   start     formData   int  false   "获取起始位置"
-// @Param   length    formData   int  false    "获取分页步长"
-// @Param   draw      formData   int  false    "获取请求次数"
+// @Param   userid    formData   string  false    "用户编号"
 // @Param   nickname  formData   string  false    "昵称"
 // @Param   telphone  formData   string  false    "手机号"
-// @Param   userid    formData   string  false    "用户编号"
 // @Failure 500 服务器错误!
-// @router /userlist [post]
-func (this *UserController) Userlist() {
-	start, _ := this.GetInt("start") //获取起始位置
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt("draw") //获取请求次数
-	var conditions string = " "
+// @router /userinfo [post]
+func (this *UserController) Userinfo() {
+	var user  models.Users
+	var conditions string = ""
 	Uid := this.GetString("userid")
 	if Uid != ""{
 		conditions+= " and userid ='"+Uid+"'"
@@ -44,17 +34,23 @@ func (this *UserController) Userlist() {
 	if Nickname != ""{
 		conditions+= " and nickname ="+Nickname
 	}
-	var Telphone = this.GetString("telphone")
+	Telphone := this.GetString("telphone")
 	if Telphone !="" {
 		conditions+= " and telphone = "+Telphone
 	}
-	var user []models.Users
-	conditions += "  order by created_at desc"
-	var  TableName = "lb_users"
-	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions)
-	res.QueryRows(&user)
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":user}
-	this.renderJson(Json)
+	if len(conditions) == 0{
+		common.ErrSystem.Message = "不存在条件"
+		this.renderJson(common.ErrSystem)
+	}
+	sql := "select * from lb_users where true "+conditions
+	res :=comm.RawSeter(sql)
+	err := res.QueryRow(&user)
+	if err == nil {
+		common.Actionsuccess.MoreInfo = &user
+		this.renderJson(common.Actionsuccess)
+	}
+	common.ErrSystem.Message = "不存在当前用户"
+	this.renderJson(common.ErrSystem)
 }
 
 // @Title 添加用户
@@ -80,13 +76,22 @@ func (this *UserController) Useradd() {
 	id := models.GetID()
 	user.Userid   =  fmt.Sprintf("%d", id)
 	user.Nickname = this.GetString("nickname")
-	user.Openid  = ""
-	user.Wnickname = ""
-	user.Wimgurl = ""
+	user.Openid  = this.GetString("openid")
+	user.Wnickname = this.GetString("wnickname")
+	user.Wimgurl = this.GetString("wimgurl")
 	user.Imgurl = this.GetString("imgurl")
-	user.Gender = 0
-	user.Age = 0
-	user.Telphone = 0
+	var Gender,_ = this.GetInt8("gender")
+	if Gender != 0{
+		user.Gender = Gender
+	}
+	var Age ,_ = this.GetInt32("age")
+	if Age != 0{
+		user.Age = Age
+	}
+	var Telphone ,_ = this.GetInt32("age")
+	if Telphone != 0{
+		user.Telphone = Telphone
+	}
 	user.Qq  = this.GetString("qq")
 	user.Weino = this.GetString("weino")
 	user.Signature = this.GetString("signature")
@@ -107,31 +112,6 @@ func (this *UserController) Useradd() {
 	this.renderJson(common.Actionsuccess)
 }
 
-// @Title 删除用户
-// @Summary  删除用户
-// @Description 删除用户
-// @Success 200  {<br/> "userid": "用户编号",<br/> }
-// @Param   userid   formData   int  true  "用户编号"
-// @Failure 100 错误提示信息!
-// @Failure 500 服务器错误!
-// @router /userdelete [post]
-func (this *UserController) Userdelete(){
-	user := models.Users{}
-	user.Userid = this.GetString("userid")
-	if user.Userid != ""{
-		if err := comm.Read(&user);err == nil {
-			if del:= comm.Delete(&user);del ==nil{
-				common.Actionsuccess.MoreInfo = &user
-				this.renderJson(common.Actionsuccess)
-			}
-		}else{
-			common.ErrSystem.Message =  "无当前用户信息!"
-		}
-	}else{
-		common.ErrSystem.Message = "userid不能为空!"
-	}
-	this.renderJson(common.ErrSystem)
-}
 
 // @Title 修改用户
 // @Description 修改用户
@@ -186,7 +166,7 @@ func (this *UserController) Update(){
 			user.Gender = Gender
 		}
 		var Age ,_ = this.GetInt32("age")
-		if Gender != 0{
+		if Age != 0{
 			user.Age = Age
 		}
 		var Telphone ,_ = this.GetInt32("age")

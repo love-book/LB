@@ -7,10 +7,8 @@ package routers
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
-	"app/controllers/admin"
-	"app/controllers/front"
+	"api/controllers"
 	"common"
-	"app/controllers/api"
 )
 
 func init() {
@@ -18,24 +16,28 @@ func init() {
 	//文档启动命令  bee run -gendoc=true -downdoc=true
 	ns := beego.NewNamespace("/v1",
 		//beego.NSCond(FilterToken),
-		   beego.NSNamespace("/user",
-		    	beego.NSInclude(
-			    	&admin.UserController{},
-		    	),
-	     	),
-		   beego.NSNamespace("/book",
-			    beego.NSInclude(
-				   &admin.BooksController{},
-			   ),
-		   ),
+		beego.NSNamespace("/user",
+			beego.NSInclude(
+				&controllers.UserController{},
+			),
+		),
+		beego.NSNamespace("/book",
+			beego.NSInclude(
+				&controllers.BooksController{},
+			),
+		),
+		beego.NSNamespace("/bookrack",
+			beego.NSInclude(
+				&controllers.BooksrackController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
-	//后台路由
-	beego.Router("/", &front.SiteController{}, "*:Index")
-	beego.Router("/site/index", &front.SiteController{}, "*:Index")
-	beego.Router("/site/signup", &front.SiteController{}, "*:Signup")
-	beego.Router("/site/login", &front.SiteController{}, "*:Login")
-	beego.Router("/site/logout", &front.SiteController{}, "*:Logout")
+
+	beego.Router("/api/index", &controllers.ApiController{}, "*:Index")
+	beego.Router("/user/login", &controllers.ApiController{}, "*:Login")
+	beego.Router("/api/test", &controllers.ApiController{}, "*:Test")
+	beego.Router("/user/stoprunning/?:type", &controllers.ApiController{}, "*:StopRunning")
 }
 
 var FilterToken = func(ctx *context.Context) bool {
