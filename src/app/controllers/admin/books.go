@@ -30,7 +30,8 @@ func (this *BooksController) Prepare() {
 // @Param   bookname  formData   string  false   "书名"
 // @Param   author    formData   string  false   "作者"
 // @Param   bookid    formData   string  false   "图书编号"
-// @Param   isbn    formData   string  false  "图书条形码"
+// @Param   isbn     formData   string  false  "图书条形码"
+// @Param   state    formData   string  false    "状态1:上架;2:下架;3:待补充"
 // @Failure 500 服务器错误!
 // @router /booklist [post]
 func (this *BooksController) BookList() {
@@ -53,6 +54,10 @@ func (this *BooksController) BookList() {
 	isbn := this.GetString("isbn")
 	if isbn !="" {
 		conditions+= " and isbn = "+isbn
+	}
+	state := this.GetString("state")
+	if state !="" {
+		conditions+= " and state = "+state
 	}
 	/*
 	starttime := this.GetString("starttime")
@@ -102,7 +107,6 @@ func (this *BooksController) Bookadd() {
 	model.Imagehead = this.GetString("imageback")
 	model.Imageback = this.GetString("imageback")
 	model.Imageurl  = this.GetString("imgurl")
-	model.Isbn = this.GetString("isbn")
 	model.Describe = this.GetString("describe")
 	model.Price,_ = this.GetUint16("price")
 	model.Isbn  =  this.GetString("isbn")
@@ -118,6 +122,17 @@ func (this *BooksController) Bookadd() {
 			common.ErrSystem.Message = fmt.Sprint(err.Message)
 			this.renderJson(common.ErrSystem)
 		}
+	}
+	//查询数据库是否存在该条形码
+	var args = [1]string{model.Isbn}
+	sql := "select * from lb_books where isbn=? limit 1"
+	RawSeter := comm.RawSeter(sql,args)
+	var book  = models.Books{}
+	zerr := RawSeter.QueryRow(&book)
+	if zerr == nil{
+		common.Actionsuccess.Message = "当前图书已添加"
+		common.Actionsuccess.MoreInfo =  &book
+		this.renderJson(common.Actionsuccess)
 	}
 	err := comm.Insert(&model)
 	if err != nil {
@@ -140,7 +155,7 @@ func (this *BooksController) Bookadd() {
 // @Param   isbn      formData   string  false    "条形码"
 // @Param   describe      formData   string  false    "图书简介"
 // @Param   price    formData   string  false    "标价"
-// @Param   state    formData   string  false    "状态1:上架;2:下架"
+// @Param   state    formData   string  false    "状态1:上架;2:下架;3:待补充"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /bookupdate [post]
@@ -176,7 +191,7 @@ func (this *BooksController) Bookupdate(){
 		if Imgurl != ""{
 			model.Imageurl = Imgurl
 		}
-		isbn := this.GetString("Barcode")
+		isbn := this.GetString("isbn")
 		if isbn != ""{
 			model.Isbn = isbn
 		}
@@ -222,7 +237,8 @@ func (this *BooksController) Uploadfile() {
 	    this.renderJson(common.ErrSystem)
 	}
 	defer f.Close()
-	url := "http://127.0.0.1:8080/static/upload/" + h.Filename
+	FilesUrl := comm.FileUrl()
+	url := FilesUrl + h.Filename
 	file:=this.SaveToFile("fname", "static/upload/" + h.Filename) // 保存位置在 static/upload, 没有文件夹要先创建
 	if  file != nil {
 		common.ErrSystem.Message = file.Error()
@@ -258,16 +274,21 @@ func (this *BooksController) Bookaddbycode() {
 		common.Actionsuccess.MoreInfo =  &book
 		this.renderJson(common.Actionsuccess)
 	}
+	//state 1:扫码正常添加，3:扫码没有查询到结果待补充
+	var state uint8 = 1
 	res, berr:= common.GetBarcodeInfo(Isbn)
-	fmt.Println(berr)
+	//查询失败
 	if berr != nil{
-		common.ErrSystem.Message = "数据查询失败！"
+		common.ErrSystem.Message = "网络繁忙!"
 		this.renderJson(common.ErrSystem)
 	}
-	//api欠费了
-	if(res.Code != "10000"){
-		common.ErrSystem.Message = "接口暂无信息！"
-		this.renderJson(common.ErrSystem)
+	//查询不到信息
+	if  res.Charge == false{
+		state = 3
+		res.Result.Showapi_res_body.GoodsName = "未知"
+		res.Result.Showapi_res_body.ManuName = ""
+		res.Result.Showapi_res_body.Img = ""
+		res.Result.Showapi_res_body.Price = "0"
 	}
 	body :=  &res.Result.Showapi_res_body
 	Uid := models.GetID()
@@ -278,17 +299,16 @@ func (this *BooksController) Bookaddbycode() {
 	model.Imagehead = ""
 	model.Imageback = ""
 	model.Imageurl  = body.Img
-	model.Isbn  =  Isbn
 	model.Describe =body.GoodsName
 	price, _:= strconv.ParseUint(body.Price, 10, 16)
 	model.Price  = uint16(price)
 	model.Isbn   = Isbn
 	model.Depreciation = 0
-	model.State = 1
+	model.State = state
 	valid := validation.Validation{}
 	valid.Required(model.Bookid,  "bookid").Message("书籍编号不能为空！")
 	valid.Required(model.Bookname, "bookname").Message("书名不能为空！")
-    valid.Required(model.Author,"isbn").Message("条形码不能为空！")
+    valid.Required(model.Isbn,"isbn").Message("条形码不能为空！")
 	if valid.HasErrors() {
 		for _, err := range valid.Errors {
 			common.ErrSystem.Message = fmt.Sprint(err.Message)

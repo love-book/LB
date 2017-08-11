@@ -164,6 +164,12 @@
                         "name": "isbn",
                         "description": "图书条形码",
                         "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "state",
+                        "description": "状态1:上架;2:下架;3:待补充",
+                        "type": "string"
                     }
                 ],
                 "responses": {
@@ -237,7 +243,7 @@
                     {
                         "in": "formData",
                         "name": "state",
-                        "description": "状态1:上架;2:下架",
+                        "description": "状态1:上架;2:下架;3:待补充",
                         "type": "string"
                     }
                 ],

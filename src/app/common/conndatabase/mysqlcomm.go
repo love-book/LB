@@ -83,3 +83,7 @@ func  RawSeter(sql string ,args ...interface{}) orm.RawSeter{
 	return  rs
 }
 
+func FileUrl() string{
+	FilesUrl := beego.AppConfig.String("FilesUrl")
+	return FilesUrl
+}
