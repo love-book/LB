@@ -69,7 +69,7 @@ func (this *BooksController) BookList() {
 	var books []models.Books
 	conditions += "  order by bookid desc"
 	var  TableName = "lb_books"
-	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions)
+	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions,"*")
 	res.QueryRows(&books)
 	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":books}
 	this.renderJson(Json)

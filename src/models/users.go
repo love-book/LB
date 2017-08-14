@@ -16,7 +16,7 @@ type  Users struct {
 	Imgurl    	string 	`json:"imgurl" `
 	Gender  	int8  	`json:"gender"`
 	Age   		int32 	`json:"age"`
-	Telphone  	int32  	`json:"telphone"`
+	Telphone  	string  `json:"telphone"`
 	Qq  		string  `json:"qq"`
 	Weino  		string  `json:"weibo"`
 	Signature  	string  `json:"signature"`

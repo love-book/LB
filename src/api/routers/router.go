@@ -31,6 +31,16 @@ func init() {
 				&controllers.BooksrackController{},
 			),
 		),
+		beego.NSNamespace("/booknews",
+			beego.NSInclude(
+				&controllers.BooknewsController{},
+			),
+		),
+		beego.NSNamespace("/bookorder",
+			beego.NSInclude(
+				&controllers.BookorderController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 

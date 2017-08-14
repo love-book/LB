@@ -88,8 +88,8 @@ func (this *UserController) Useradd() {
 	if Age != 0{
 		user.Age = Age
 	}
-	var Telphone ,_ = this.GetInt32("age")
-	if Telphone != 0{
+	var Telphone = this.GetString("telphone")
+	if Telphone != ""{
 		user.Telphone = Telphone
 	}
 	user.Qq  = this.GetString("qq")
@@ -125,13 +125,13 @@ func (this *UserController) Useradd() {
 // @Param   mgurl       formData   string  false   "头像"
 // @Param   gender      formData   int  false     "性别1:男2:女3:保密"
 // @Param   age         formData   int  false     "年龄"
-// @Param   telphone    formData   int  false     "手机号"
+// @Param   telphone    formData   string  false     "手机号"
 // @Param   qq          formData   string  false  "QQ"
 // @Param   weino       formData   string  false  "微博"
 // @Param   signature   formData   string  false  "个性签名"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
-// @router /userupdate [post]
+// @router /update [post]
 func (this *UserController) Update(){
 	user := models.Users{}
 	user.Userid = this.GetString("userid")
@@ -169,9 +169,9 @@ func (this *UserController) Update(){
 		if Age != 0{
 			user.Age = Age
 		}
-		var Telphone ,_ = this.GetInt32("age")
-		if Telphone != 0{
-			user.Telphone = Telphone
+		var telphone  = this.GetString("telphone")
+		if telphone != ""{
+			user.Telphone = telphone
 		}
 		Qq := this.GetString("qq")
 		if Qq != ""{

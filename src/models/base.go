@@ -82,8 +82,8 @@ func TableName(str string) string {
 	this.renderJson(Json)
 
  */
-func GetPagesInfo(tableName string, start int, pagesize int, conditions string) (int, orm.RawSeter) {
-	if start <= 1 {
+func GetPagesInfo(tableName string, start int, pagesize int, conditions string,filed string) (int, orm.RawSeter) {
+	if start < 1 {
 		start = 0
 	}
 	if pagesize == 0 {
@@ -93,7 +93,7 @@ func GetPagesInfo(tableName string, start int, pagesize int, conditions string) 
 	o := orm.NewOrm()
 	var totalItem  int = 0                                                          //总条数
 	o.Raw("SELECT count(*) FROM " + tableName + "  where true " + conditions).QueryRow(&totalItem) //获取总条数
-	rs = o.Raw("select *  from  " + tableName + "  where true " + conditions + " LIMIT " + strconv.Itoa(start) + "," + strconv.Itoa(pagesize))
+	rs = o.Raw("select "+filed+"  from  " + tableName + "  where true " + conditions + " LIMIT " + strconv.Itoa(start) + "," + strconv.Itoa(pagesize))
 	return totalItem,  rs
 }
 
