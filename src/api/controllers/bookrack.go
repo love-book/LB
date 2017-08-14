@@ -6,15 +6,17 @@ import (
 	"models"
 	"fmt"
 	"github.com/astaxie/beego/validation"
+	"encoding/json"
+	"time"
 )
 
 type BooksrackController struct {
 	ApiController
 }
 
-// @Title 用户获取图书列表
-// @Summary  用户获取图书列表
-// @Description  用户获取图书列表
+// @Title 用户获取书架图书列表
+// @Summary  用户获取书架图书列表
+// @Description  用户获取书架图书列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   length    formData   string  false      "获取分页步长"
 // @Param   draw      formData   string  false      "当前页"
@@ -79,8 +81,26 @@ func (this *BooksrackController) Bookadd() {
 	//查询图书信息
 	model := models.Books{}
 	model.Bookid = bookid
-	if err := comm.Read(&model);err != nil {
+	if Bookserr := comm.Read(&model);Bookserr != nil {
 		common.ErrSystem.Message = "没有当前图书"
+		this.renderJson(common.ErrSystem)
+	}
+	bookInfo := map[string]interface{}{
+		"bookid":model.Bookid,
+		"bookname": model.Bookname,
+		"author": model.Author,
+		"imageurl":model.Imageurl,
+		"Imagehead":model.Imagehead,
+		"imageback" :model.Imageback,
+		"isbn":model.Isbn,
+		"depreciation":model.Depreciation,
+		"price":model.Price,
+		"describe":model.Describe,
+		"state":model.State,
+	}
+	info,infoerr :=json.Marshal(bookInfo)
+	if infoerr != nil{
+		common.ErrSystem.Message = "未知错误!"
 		this.renderJson(common.ErrSystem)
 	}
 	//加入用户书架
@@ -89,14 +109,41 @@ func (this *BooksrackController) Bookadd() {
 	err := comm.Read(&book)
 	if err != nil {
 		//没有书架
+		infostr :=  "["+string(info)+"]"
+		book.Books = infostr
+		book.Update_time = time.Now().Unix()
+		fmt.Println(book.Books)
+		err = comm.Insert(&book)
+		if err != nil {
+			common.ErrSystem.Message = fmt.Sprint(err)
+			this.renderJson(common.ErrSystem)
+		}
 	}else{
-
+		var Mybook  [...]map[string]interface{}
+		unerr :=json.Unmarshal([]byte(book.Books),&Mybook)
+		if unerr != nil{
+			common.ErrSystem.Message = "未知错误!"
+			this.renderJson(common.ErrSystem)
+		}
+		fmt.Println(Mybook)
+		return
+		for _,val := range Mybook{
+			if val["bookid"] == bookid{
+				common.Actionsuccess.Message ="当前图书已加入书架"
+				common.Actionsuccess.MoreInfo = &Mybook
+				this.renderJson(common.Actionsuccess)
+			}
+		}
+		common.Actionsuccess.MoreInfo = &bookInfo
+		this.renderJson(common.Actionsuccess)
 	}
+	common.Actionsuccess.MoreInfo = bookInfo
+	this.renderJson(common.Actionsuccess)
 }
 
-// @Title 修改书籍
-// @Description 修改书籍
-// @Summary  修改书籍
+// @Title 修改书架书信息
+// @Description 修改书架书信息
+// @Summary  修改书架书信息
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   bookname   formData   string  true    "书名"
 // @Param   author     formData   string  false   "作者"

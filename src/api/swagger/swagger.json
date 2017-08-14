@@ -290,6 +290,183 @@
                 }
             }
         },
+        "/bookrack/bookadd": {
+            "post": {
+                "tags": [
+                    "bookrack"
+                ],
+                "summary": "添加到书架",
+                "description": "添加到书架",
+                "operationId": "BooksrackController.添加到书架",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "userid",
+                        "description": "用户编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookid",
+                        "description": "图书编号",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/bookrack/booklist": {
+            "post": {
+                "tags": [
+                    "bookrack"
+                ],
+                "summary": "用户获取书架图书列表",
+                "description": "用户获取书架图书列表",
+                "operationId": "BooksrackController.用户获取书架图书列表",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "length",
+                        "description": "获取分页步长",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "draw",
+                        "description": "当前页",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookname",
+                        "description": "书名",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "author",
+                        "description": "作者",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookid",
+                        "description": "图书编号",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "isbn",
+                        "description": "图书条形码",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "userid",
+                        "description": "用户编号",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/bookrack/bookupdate": {
+            "post": {
+                "tags": [
+                    "bookrack"
+                ],
+                "summary": "修改书架书信息",
+                "description": "修改书架书信息",
+                "operationId": "BooksrackController.修改书架书信息",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "bookname",
+                        "description": "书名",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "author",
+                        "description": "作者",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "imageurl",
+                        "description": "图书封面图",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "imagehead",
+                        "description": "图书正面图",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "imageback",
+                        "description": "图书背面图",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "isbn",
+                        "description": "条形码",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "describe",
+                        "description": "图书简介",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "price",
+                        "description": "标价",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "state",
+                        "description": "状态1:上架;2:下架;3:待补充",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
         "/user/useradd": {
             "post": {
                 "tags": [

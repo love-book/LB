@@ -4,7 +4,7 @@ import(
 	//"github.com/astaxie/beego/validation"
 	//"log"
 	"github.com/astaxie/beego/orm"
-	_"app/common/conndatabase"
+	_"common/conndatabase"
 )
 
 type Books struct {

@@ -6,8 +6,6 @@ import (
 	"strings"
 	"common"
 	"common/wechat"
-	//"net/http"
-	//"encoding/json"
 )
 
 type ApiController struct {

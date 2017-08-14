@@ -1,7 +1,7 @@
 package models
 
 import(
-	_ "app/common/conndatabase"
+	_ "common/conndatabase"
 	"github.com/astaxie/beego/validation"
 	"log"
 	"github.com/astaxie/beego/orm"
