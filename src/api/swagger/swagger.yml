@@ -455,7 +455,7 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /bookrack/bookadd:
+  /bookrack/bookrackadd:
     post:
       tags:
       - bookrack
@@ -484,7 +484,46 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /bookrack/booklist:
+  /bookrack/bookrackinfo:
+    post:
+      tags:
+      - bookrack
+      summary: 用户获取书架图书详情
+      description: 用户获取书架图书详情
+      operationId: BooksrackController.用户获取书架图书详情
+      parameters:
+      - in: formData
+        name: length
+        description: 获取分页步长
+        type: string
+      - in: formData
+        name: draw
+        description: 当前页
+        type: string
+      - in: formData
+        name: bookid
+        description: 图书编号
+        required: true
+        type: string
+      - in: formData
+        name: userid
+        description: 用户编号
+        required: true
+        type: string
+      - in: formData
+        name: bookstate
+        description: 图书状态
+        type: string
+      responses:
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /bookrack/bookracklist:
     post:
       tags:
       - bookrack
@@ -524,6 +563,14 @@ paths:
         name: bookstate
         description: 图书状态
         type: string
+      - in: formData
+        name: gender
+        description: 性别
+        type: string
+      - in: formData
+        name: age
+        description: 年龄
+        type: string
       responses:
         "200":
           description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
@@ -533,7 +580,7 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /bookrack/bookupdate:
+  /bookrack/bookrackupdate:
     post:
       tags:
       - bookrack
@@ -564,77 +611,6 @@ paths:
             "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
             <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
             }'
-        "500":
-          description: 服务器错误!
-  /user/update:
-    post:
-      tags:
-      - user
-      summary: 修改用户
-      description: 修改用户
-      operationId: UserController.修改用户
-      parameters:
-      - in: formData
-        name: userid
-        description: 用户编号
-        required: true
-        type: integer
-        format: int64
-      - in: formData
-        name: nickname
-        description: 昵称
-        type: string
-      - in: formData
-        name: openid
-        description: openid
-        type: string
-      - in: formData
-        name: wnickname
-        description: 微信昵称
-        type: string
-      - in: formData
-        name: wimgurl
-        description: 微信头像
-        type: string
-      - in: formData
-        name: mgurl
-        description: 头像
-        type: string
-      - in: formData
-        name: gender
-        description: 性别1:男2:女3:保密
-        type: integer
-        format: int64
-      - in: formData
-        name: age
-        description: 年龄
-        type: integer
-        format: int64
-      - in: formData
-        name: telphone
-        description: 手机号
-        type: string
-      - in: formData
-        name: qq
-        description: QQ
-        type: string
-      - in: formData
-        name: weino
-        description: 微博
-        type: string
-      - in: formData
-        name: signature
-        description: 个性签名
-        type: string
-      responses:
-        "100":
-          description: 错误提示信息!
-        "200":
-          description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
-            "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":
-            "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号",
-            <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address":
-            "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
   /user/useradd:
@@ -725,6 +701,77 @@ paths:
         description: 手机号
         type: string
       responses:
+        "200":
+          description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
+            "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":
+            "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号",
+            <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address":
+            "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
+        "500":
+          description: 服务器错误!
+  /user/userupdate:
+    post:
+      tags:
+      - user
+      summary: 修改用户
+      description: 修改用户
+      operationId: UserController.修改用户
+      parameters:
+      - in: formData
+        name: userid
+        description: 用户编号
+        required: true
+        type: integer
+        format: int64
+      - in: formData
+        name: nickname
+        description: 昵称
+        type: string
+      - in: formData
+        name: openid
+        description: openid
+        type: string
+      - in: formData
+        name: wnickname
+        description: 微信昵称
+        type: string
+      - in: formData
+        name: wimgurl
+        description: 微信头像
+        type: string
+      - in: formData
+        name: mgurl
+        description: 头像
+        type: string
+      - in: formData
+        name: gender
+        description: 性别1:男2:女3:保密
+        type: integer
+        format: int64
+      - in: formData
+        name: age
+        description: 年龄
+        type: integer
+        format: int64
+      - in: formData
+        name: telphone
+        description: 手机号
+        type: string
+      - in: formData
+        name: qq
+        description: QQ
+        type: string
+      - in: formData
+        name: weino
+        description: 微博
+        type: string
+      - in: formData
+        name: signature
+        description: 个性签名
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
         "200":
           description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
             "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":

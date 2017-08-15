@@ -10,7 +10,6 @@ import (
 	"app/controllers/admin"
 	"app/controllers/front"
 	"common"
-	"app/controllers/api"
 )
 
 func init() {

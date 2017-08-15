@@ -72,7 +72,6 @@ func Query(sql string ,obj interface{},args ...interface{}) (int64,error) {
 	if err == nil {
 		return num,err
 	}
-
 	return 0, err
 }
 

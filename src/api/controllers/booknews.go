@@ -134,7 +134,7 @@ func (this *BooknewsController) Newsadd() {
 		this.renderJson(common.ErrSystem)
 	}
 	//查询书主人用户书架
-	book := models.BookrackList{}
+	book := models.BookrackInfo{}
 	book.Userid = from
 	book.Bookid = bookid
 	query:= []string{from,bookid}
