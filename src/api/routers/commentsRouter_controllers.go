@@ -98,23 +98,31 @@ func init() {
 	beego.GlobalControllerRouter["api/controllers:BooksrackController"] = append(beego.GlobalControllerRouter["api/controllers:BooksrackController"],
 		beego.ControllerComments{
 			Method: "Bookracklist",
-			Router: `/booklist`,
+			Router: `/bookracklist`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["api/controllers:BooksrackController"] = append(beego.GlobalControllerRouter["api/controllers:BooksrackController"],
 		beego.ControllerComments{
-			Method: "Bookadd",
-			Router: `/bookadd`,
+			Method: "Bookrackinfo",
+			Router: `/bookrackinfo`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["api/controllers:BooksrackController"] = append(beego.GlobalControllerRouter["api/controllers:BooksrackController"],
 		beego.ControllerComments{
-			Method: "Bookupdate",
-			Router: `/bookupdate`,
+			Method: "Bookrackadd",
+			Router: `/bookrackadd`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["api/controllers:BooksrackController"] = append(beego.GlobalControllerRouter["api/controllers:BooksrackController"],
+		beego.ControllerComments{
+			Method: "Bookrackupdate",
+			Router: `/bookrackupdate`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
@@ -137,8 +145,8 @@ func init() {
 
 	beego.GlobalControllerRouter["api/controllers:UserController"] = append(beego.GlobalControllerRouter["api/controllers:UserController"],
 		beego.ControllerComments{
-			Method: "Update",
-			Router: `/update`,
+			Method: "Userupdate",
+			Router: `/userupdate`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})

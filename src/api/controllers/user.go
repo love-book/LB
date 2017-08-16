@@ -131,8 +131,8 @@ func (this *UserController) Useradd() {
 // @Param   signature   formData   string  false  "个性签名"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
-// @router /update [post]
-func (this *UserController) Update(){
+// @router /userupdate [post]
+func (this *UserController) Userupdate(){
 	user := models.Users{}
 	user.Userid = this.GetString("userid")
 	err := user.UserValidation()
