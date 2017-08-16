@@ -9,11 +9,11 @@ import(
 
 const (
 	twepoch = int64(1417937700000)
-	DistrictIdBits = uint(5)
-	NodeIdBits = uint(5)
-	sequenceBits = uint(12)
+	DistrictIdBits = uint64(5)
+	NodeIdBits = uint64(5)
 	maxNodeId = -1 ^ (-1 << NodeIdBits)
 	maxDistrictId = -1 ^ (-1 << DistrictIdBits)
+	sequenceBits = uint64(12)
 	nodeIdShift = sequenceBits
 	DistrictIdshift = sequenceBits + NodeIdBits
 	timestampLeftShift = sequenceBits + NodeIdBits + DistrictIdBits
@@ -70,8 +70,11 @@ func (id * IdWorker) NextId ()(int64,error)  {
 	defer id.mutex.Unlock()
 
 	id.mutex.Lock()
+	/*ids,_  := id.nextid()
+	for ids  < 0 {
+		ids,_ = id.nextid()
+	}*/
 	return id.nextid()
-
 }
 
 func (id * IdWorker) NextIds(num int) ([]int64,error)   {
