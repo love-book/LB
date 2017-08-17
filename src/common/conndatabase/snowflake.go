@@ -45,8 +45,8 @@ func NewIdWorker(NodeId int64,districtId int64) (* IdWorker, error) {
 
 	idworker.nodeId = NodeId
 	idworker.districtId = districtId
-	idworker.lastTimestamp = -1
-	idworker.sequence = 0
+	idworker.lastTimestamp = int64(-1)
+	idworker.sequence = int64(0)
 	idworker.twepoch = twepoch
 	idworker.mutex = sync.Mutex{}
 	fmt.Sprintf("worker starting. timestamp left shift %d, District id bits %d, worker id bits %d, sequence bits %d, workerid %d", timestampLeftShift, DistrictIdBits, NodeIdBits, sequenceBits, NodeId)
