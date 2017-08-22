@@ -1,0 +1,1 @@
+bee generate scaffold users -fields="userid:pk,openid:string,wnickname:string,wimgurl:string,nickname:string,imgurl:string,gender:string,age:string,telphone:string,qq:string,weino:string,signature:string,address:string,created_at:string,updated_at:string"  -driver=mysql -conn="root:root@tcp(127.0.0.1:3306)/lb"

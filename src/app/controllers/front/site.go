@@ -3,7 +3,7 @@ package front
 import (
 	"fmt"
 	"strings"
-	"app/models"
+	"models"
 )
 
 type SiteController struct {
@@ -29,7 +29,7 @@ func (this *SiteController) Signup(){
 		}else{
 
 		}
-		user := models.User{}
+		user := models.Users{}
 
 		if len(errmsg)>0 {
 			 errmsg[0] = "用户名或密码错误!"

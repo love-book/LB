@@ -22,7 +22,8 @@ type BookorderController struct {
 // @Param   draw      formData   string  false      "当前页"
 // @Param   bookname  formData   string  false   "书名"
 // @Param   author    formData   string  false   "作者"
-// @Param   bookid    formData   string  false   "图书编号"
+// @Param   bookid    formData   string  false   "图书编号"\
+// @Param   bookqid    formData   string  false   "用户书架图书唯一编号"
 // @Param   isbn      formData   string  false  "图书条形码"
 // @Param   orderid    formData   string  false   "订单编号"
 // @Param   userid_from    formData   string  false   "书主人编号"
@@ -34,61 +35,54 @@ func (this *BookorderController) Orderlist() {
 	length, _ := this.GetInt("length") //获取分页步长
 	draw, _ := this.GetInt("draw") //获取请求次数
 	var conditions string = " "
-	bookid := this.GetString("bookid")
-	if bookid !="" {
-	   conditions+= " and JSON_EXTRACT(books,'$.bookid') = '"+bookid+"'"
+	if v := this.GetString("bookid");v !="" {
+	   conditions+= " and JSON_EXTRACT(books,'$.bookid') = '"+v+"'"
 	}
-	bookstate := this.GetString("bookstate")
-	if bookstate !="" {
-		conditions+= " and JSON_EXTRACT(books,'$.bookstate') = '"+bookstate+"'"
+	if v := this.GetString("bookstate");v !="" {
+		conditions+= " and JSON_EXTRACT(books,'$.bookstate') = '"+v+"'"
 	}
-	bookname := this.GetString("bookname")
-	if bookname != ""{
-		conditions+= " and JSON_EXTRACT(books,'$.bookname') = '"+bookname+"'"
+	if v := this.GetString("bookname");v != ""{
+		conditions+= " and JSON_EXTRACT(books,'$.bookname') = '"+v+"'"
 	}
-	author := this.GetString("author")
-	if author !="" {
-		conditions+= " and JSON_EXTRACT(books,'$.author') = '"+author+"'"
+	if v := this.GetString("author");v !="" {
+		conditions+= " and JSON_EXTRACT(books,'$.author') = '"+v+"'"
 	}
-	isbn := this.GetString("isbn")
-	if isbn !="" {
-		conditions+= " and JSON_EXTRACT(books,'$.isbn') = '"+isbn+"'"
+	if v := this.GetString("isbn");v !="" {
+		conditions+= " and JSON_EXTRACT(books,'$.isbn') = '"+v+"'"
 	}
-	orderid := this.GetString("orderid")
-	if orderid !="" {
-		conditions+= " and orderid = '"+orderid+"'"
+	if v := this.GetString("orderid");v !="" {
+		conditions+= " and orderid = '"+v+"'"
 	}
-	userid_from := this.GetString("userid_from")
-	if userid_from !="" {
-		conditions+= " and userid_from = '"+userid_from+"'"
+	if v := this.GetString("userid_from");v !="" {
+		conditions+= " and userid_from = '"+v+"'"
 	}
-	userid_to := this.GetString("userid_to")
-	if userid_to !="" {
-		conditions+= " and userid_to = '"+userid_to+"'"
+	if v := this.GetString("userid_to");v !="" {
+		conditions+= " and userid_to = '"+v+"'"
 	}
-	order_state := this.GetString("order_state")
-	if order_state !="" {
-		conditions+= " and order_state = '"+order_state+"'"
+	if v := this.GetString("order_state");v !="" {
+		conditions+= " and order_state = '"+v+"'"
+	}
+	if v := this.GetString("bookqid");v !="" {
+		conditions+= " and bookqid = '"+v+"'"
 	}
 	var start int = 0
 	if draw  > 0 {
 		start = (draw-1)*length
 	}
-	var books []models.Bookorder
-	conditions += "  order by pushtime desc"
-	var  TableName = "lb_bookorder"
-	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions,"*")
-	res.QueryRows(&books)
-	resPonse := map[int]interface{}{}
+	books, totalItem :=models.BookOrderListData(start,length,conditions)
+	var resPonse []interface{}
 	book  := map[string]interface{}{}
 	JsonBook  := map[string]interface{}{}
-	JsonRes  := map[string]interface{}{}
-	for key,val := range books{
-		book["orderid"] =  val.Orderid
+	JsonFrom  := map[string]interface{}{}
+	JsonTo  := map[string]interface{}{}
+	for _,val := range books{
+		book["orderid"]     =  val.Orderid
 		book["userid_from"] =  val.Userid_from
-		book["userid_to"] =  val.Userid_to
+		book["userid_to"]   =  val.Userid_to
+		book["bookqid"]     =  val.Bookqid
 		book["order_state"] =  val.Order_state
-		book["pushtime"] =  val.Pushtime
+		book["create_time"] =  val.Create_time
+		book["update_time"] =  val.Update_time
 		Books := []byte(val.Books)
 		err := json.Unmarshal(Books, &JsonBook)
 		if err == nil{
@@ -96,16 +90,21 @@ func (this *BookorderController) Orderlist() {
 		}else{
 			book["books"] = ""
 		}
-		Users := []byte(val.Users)
-		err = json.Unmarshal(Users, &JsonRes)
+		UserFrom := []byte(val.User_from)
+		err = json.Unmarshal(UserFrom, &JsonFrom)
 		if err == nil{
-			book["from"] =  JsonRes["from"]
-			book["to"]   =  JsonRes["to"]
+			book["user_from"] =  JsonFrom
 		}else{
-			book["from"] =  ""
-			book["to"]   =  ""
+			book["user_from"] =  ""
 		}
-		resPonse[key] = &book
+		UserTo := []byte(val.User_to)
+		err = json.Unmarshal(UserTo, &JsonTo)
+		if err == nil{
+			book["user_to"]   =  JsonTo
+		}else{
+			book["user_to"]   =  ""
+		}
+		resPonse = append(resPonse,&book)
 	}
 	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":resPonse}
 	this.renderJson(Json)
@@ -119,26 +118,20 @@ func (this *BookorderController) Orderlist() {
 // @Success 200  {<br/>"userid":"用户编号", "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   from   formData   string  true    "书主人用户编号"
 // @Param   to   formData   string  true      "借书人用户编号"
-// @Param   bookid   formData   string  true  "书主人书架图书编号"
+// @Param   bookqid   formData   string  true  "书主人书架图书唯一编号"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /orderadd [post]
 func (this *BookorderController) Orderadd() {
-	bookid  :=   this.GetString("bookid")
+	bookqid  :=   this.GetString("bookqid")
 	from    :=   this.GetString("from")
 	to      :=   this.GetString("to")
-	if from =="" || bookid=="" || to == ""{
+	if from =="" || bookqid=="" || to == ""{
 		common.ErrSystem.Message = "参数错误!"
 		this.renderJson(common.ErrSystem)
 	}
 	//查询书主人用户书架
-	book := models.BookrackInfo{}
-	book.Userid = from
-	book.Bookid = bookid
-	query:= []string{from,bookid}
-	sql:= "select * from lb_users as u left join lb_bookrack as b  on u.userid= b.userid  where b.userid=? and b.bookid=?  limit 1"
-	RawSeter := comm.RawSeter(sql,query)
-	err := RawSeter.QueryRow(&book)
+	book,err:= models.GetUserBookRack(from,bookqid)
 	if err != nil {
 		common.ErrSystem.Message = "用户不存在当前图书!"
 		this.renderJson(common.ErrSystem)
@@ -157,11 +150,8 @@ func (this *BookorderController) Orderadd() {
 	newBook["describe"] = book.Describe
 	newBook["state"] = book.State
 	//查询书主人以及借书用户信息
-	toUser := []models.Users{}
 	userInfo:= []string{from,to}
-	UserSql:= "select * from lb_users  where userid in(? ,?)"
-	UserRawSeter := comm.RawSeter(UserSql,userInfo)
-	_,uerr := UserRawSeter.QueryRows(&toUser)
+	toUser,uerr := models.GetUsersByIds(userInfo)
 	if uerr != nil {
 		common.ErrSystem.Message = "借书人或书主人信息不存在!"
 		this.renderJson(common.ErrSystem)
@@ -188,11 +178,13 @@ func (this *BookorderController) Orderadd() {
 			UserTo["signature"] = val.Signature
 		}
 	}
-	Users := map[string]interface{}{}
-	Users["from"] = UserFrom
-	Users["to"]   = UserTo
-	bty,jerr:= json.Marshal(&Users)
-	if jerr != nil{
+	fty,ferr:= json.Marshal(&UserFrom)
+	if ferr != nil{
+		common.ErrSystem.Message = "未知错误!"
+		this.renderJson(common.ErrSystem)
+	}
+	tty,terr:= json.Marshal(&UserTo)
+	if terr != nil{
 		common.ErrSystem.Message = "未知错误!"
 		this.renderJson(common.ErrSystem)
 	}
@@ -201,17 +193,19 @@ func (this *BookorderController) Orderadd() {
 		common.ErrSystem.Message = "未知错误!"
 		this.renderJson(common.ErrSystem)
 	}
-
 	NewsInfo := models.Bookorder{}
 	id := models.GetID()
 	NewsInfo.Orderid =  fmt.Sprintf("%d", id)
-	NewsInfo.Userid_to = to
+	NewsInfo.Bookqid = book.Bookqid
 	NewsInfo.Userid_from = from
+	NewsInfo.Userid_to = to
 	NewsInfo.Books  = string(res)
-	NewsInfo.Users  = string(bty)
+	NewsInfo.User_from = string(fty)
+	NewsInfo.User_to = string(tty)
 	NewsInfo.Order_state = 0
 	t:= time.Now().Unix()
-	NewsInfo.Pushtime = t
+	NewsInfo.Create_time = t
+	NewsInfo.Update_time = t
 	toRes :=  comm.Insert(&NewsInfo)
     if toRes == nil {
 		common.Actionsuccess.Message ="订单添加成功!"
@@ -242,10 +236,11 @@ func (this *BookorderController) Orderupdate() {
 	}
 	model := models.Bookorder{}
 	model.Orderid = orderid
-	err := comm.Read(&model)
-	if err == nil {
+	if err := comm.Read(&model);err == nil {
 		i64, err := strconv.ParseUint(order_state, 10, 8)
 		model.Order_state = uint8(i64)
+		t:= time.Now().Unix()
+		model.Update_time = t
 		err = comm.Update(&model)
 		if err == nil {
 			common.Actionsuccess.Message ="当前订单状态已修改"
@@ -253,6 +248,6 @@ func (this *BookorderController) Orderupdate() {
 			this.renderJson(common.Actionsuccess)
 		}
 	}
-	common.ErrSystem.Message = fmt.Sprint(err)
+	common.ErrSystem.Message = "修改失败!"
 	this.renderJson(common.ErrSystem)
 }

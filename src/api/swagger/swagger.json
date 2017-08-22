@@ -67,6 +67,13 @@
                         "name": "price",
                         "description": "标价",
                         "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "userid",
+                        "description": "用户id",
+                        "required": true,
+                        "type": "string"
                     }
                 ],
                 "responses": {
@@ -193,9 +200,15 @@
                 "parameters": [
                     {
                         "in": "formData",
+                        "name": "bookid",
+                        "description": "图书编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
                         "name": "bookname",
                         "description": "书名",
-                        "required": true,
                         "type": "string"
                     },
                     {
@@ -290,6 +303,87 @@
                 }
             }
         },
+        "/booknews/libraryrequest": {
+            "post": {
+                "tags": [
+                    "booknews"
+                ],
+                "summary": "发起借书请求",
+                "description": "发起借书请求",
+                "operationId": "BooknewsController.发起借书请求",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "from",
+                        "description": "书主人用户编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "to",
+                        "description": "借书人用户编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookqid",
+                        "description": "书主人书架图书唯一编号",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e\"userid\":\"用户编号\",\"bookqid\":\"图书唯一编号\",\"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/booknews/libraryrequestupdate": {
+            "post": {
+                "tags": [
+                    "booknews"
+                ],
+                "summary": "更改借书请求状态",
+                "description": "更改借书消息状态",
+                "operationId": "BooknewsController.更改借书请求状态",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "newid",
+                        "description": "消息编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "order_state",
+                        "description": "消息状态1:同意借书2:拒绝借书",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
         "/booknews/newsList": {
             "post": {
                 "tags": [
@@ -313,44 +407,21 @@
                     },
                     {
                         "in": "formData",
-                        "name": "bookname",
-                        "description": "书名",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "author",
-                        "description": "作者",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "bookid",
-                        "description": "图书编号",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "isbn",
-                        "description": "图书条形码",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
                         "name": "userid",
                         "description": "用户编号",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookqid",
+                        "description": "图书唯一编号",
                         "type": "string"
                     },
                     {
                         "in": "formData",
                         "name": "newid",
                         "description": "消息编号",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "from_to",
-                        "description": "消息人类型 from:1书属于的人,to:2借书人",
                         "type": "string"
                     },
                     {
@@ -363,94 +434,6 @@
                 "responses": {
                     "200": {
                         "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"bookstate\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
-                    },
-                    "500": {
-                        "description": "服务器错误!"
-                    }
-                }
-            }
-        },
-        "/booknews/newsadd": {
-            "post": {
-                "tags": [
-                    "booknews"
-                ],
-                "summary": "发起借书消息",
-                "description": "发起借书消息",
-                "operationId": "BooknewsController.发起借书消息",
-                "parameters": [
-                    {
-                        "in": "formData",
-                        "name": "from",
-                        "description": "书主人用户编号",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "to",
-                        "description": "借书人用户编号",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "bookid",
-                        "description": "书主人书架图书编号",
-                        "required": true,
-                        "type": "string"
-                    }
-                ],
-                "responses": {
-                    "100": {
-                        "description": "错误提示信息!"
-                    },
-                    "200": {
-                        "description": "{\u003cbr/\u003e\"userid\":\"用户编号\", \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
-                    },
-                    "500": {
-                        "description": "服务器错误!"
-                    }
-                }
-            }
-        },
-        "/booknews/newsupdate": {
-            "post": {
-                "tags": [
-                    "booknews"
-                ],
-                "summary": "更改借书消息状态",
-                "description": "更改借书消息状态",
-                "operationId": "BooknewsController.更改借书消息状态",
-                "parameters": [
-                    {
-                        "in": "formData",
-                        "name": "userid",
-                        "description": "用户编号",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "newid",
-                        "description": "消息编号",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "order_state",
-                        "description": "消息状态状态1:同意2:拒绝,3:完成，0：借书请求",
-                        "required": true,
-                        "type": "string"
-                    }
-                ],
-                "responses": {
-                    "100": {
-                        "description": "错误提示信息!"
-                    },
-                    "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -494,7 +477,13 @@
                     {
                         "in": "formData",
                         "name": "bookid",
-                        "description": "图书编号",
+                        "description": "图书编号\\",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "bookqid",
+                        "description": "用户书架图书唯一编号",
                         "type": "string"
                     },
                     {
@@ -563,8 +552,8 @@
                     },
                     {
                         "in": "formData",
-                        "name": "bookid",
-                        "description": "书主人书架图书编号",
+                        "name": "bookqid",
+                        "description": "书主人书架图书唯一编号",
                         "required": true,
                         "type": "string"
                     }
@@ -648,7 +637,7 @@
                         "description": "错误提示信息!"
                     },
                     "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                        "description": "{ \u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -656,34 +645,15 @@
                 }
             }
         },
-        "/bookrack/bookrackinfo": {
+        "/bookrack/bookrackaddbysn": {
             "post": {
                 "tags": [
                     "bookrack"
                 ],
-                "summary": "用户获取书架图书详情",
-                "description": "用户获取书架图书详情",
-                "operationId": "BooksrackController.用户获取书架图书详情",
+                "summary": "扫条码添加到书架",
+                "description": "扫条码添加到书架",
+                "operationId": "BooksrackController.扫条码添加到书架",
                 "parameters": [
-                    {
-                        "in": "formData",
-                        "name": "length",
-                        "description": "获取分页步长",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "draw",
-                        "description": "当前页",
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "bookid",
-                        "description": "图书编号",
-                        "required": true,
-                        "type": "string"
-                    },
                     {
                         "in": "formData",
                         "name": "userid",
@@ -693,14 +663,18 @@
                     },
                     {
                         "in": "formData",
-                        "name": "bookstate",
-                        "description": "图书状态",
+                        "name": "isbn",
+                        "description": "图书条码",
+                        "required": true,
                         "type": "string"
                     }
                 ],
                 "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
                     "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"bookstate\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                        "description": "{ \u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -715,7 +689,7 @@
                 ],
                 "summary": "用户获取书架图书列表",
                 "description": "用户获取书架图书列表",
-                "operationId": "BooksrackController.用户获取书架图书列表",
+                "operationId": "BooksrackController.用户获取书城图书列表",
                 "parameters": [
                     {
                         "in": "formData",
@@ -749,6 +723,12 @@
                     },
                     {
                         "in": "formData",
+                        "name": "bookqid",
+                        "description": "图书唯一码",
+                        "type": "string"
+                    },
+                    {
+                        "in": "formData",
                         "name": "isbn",
                         "description": "图书条形码",
                         "type": "string"
@@ -761,7 +741,7 @@
                     },
                     {
                         "in": "formData",
-                        "name": "bookstate",
+                        "name": "book_state",
                         "description": "图书状态",
                         "type": "string"
                     },
@@ -799,21 +779,15 @@
                 "parameters": [
                     {
                         "in": "formData",
-                        "name": "userid",
-                        "description": "用户编号",
+                        "name": "bookqid",
+                        "description": "图书唯一编号",
                         "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "formData",
-                        "name": "bookid",
-                        "description": "图书编号",
                         "type": "string"
                     },
                     {
                         "in": "formData",
                         "name": "bookstate",
-                        "description": "图书状态",
+                        "description": "书架图书状态1:上架;2:下架;3:待补充",
                         "required": true,
                         "type": "string"
                     }
@@ -823,7 +797,7 @@
                         "description": "错误提示信息!"
                     },
                     "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                        "description": "{ \u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -831,14 +805,95 @@
                 }
             }
         },
-        "/user/useradd": {
+        "/users/": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "description": "get Users",
+                "operationId": "UsersController.Get All",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "query",
+                        "description": "Filter. e.g. col1:v1,col2:v2 ...",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "fields",
+                        "description": "Fields returned. e.g. col1,col2 ...",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "sortby",
+                        "description": "Sorted-by fields. e.g. col1,col2 ...",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "description": "Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc ...",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "description": "Limit the size of result set. Must be an integer",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "description": "Start position of result set. Must be an integer",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/.Users"
+                        }
+                    },
+                    "403": {}
+                }
+            },
             "post": {
                 "tags": [
-                    "user"
+                    "users"
+                ],
+                "description": "create Users",
+                "operationId": "UsersController.Post",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "body for Users content",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.Users"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "{int} models.Users"
+                    },
+                    "403": {
+                        "description": "body is empty"
+                    }
+                }
+            }
+        },
+        "/users/useradd": {
+            "post": {
+                "tags": [
+                    "users"
                 ],
                 "summary": "添加用户",
                 "description": "添加用户",
-                "operationId": "UserController.添加用户",
+                "operationId": "UsersController.添加用户",
                 "parameters": [
                     {
                         "in": "formData",
@@ -924,14 +979,14 @@
                 }
             }
         },
-        "/user/userinfo": {
+        "/users/userinfo": {
             "post": {
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "获取用户信息",
                 "description": "获取用户信息",
-                "operationId": "UserController.获取用户信息",
+                "operationId": "UsersController.获取用户信息",
                 "parameters": [
                     {
                         "in": "formData",
@@ -962,14 +1017,14 @@
                 }
             }
         },
-        "/user/userupdate": {
+        "/users/userupdate": {
             "post": {
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "修改用户",
                 "description": "修改用户",
-                "operationId": "UserController.修改用户",
+                "operationId": "UsersController.修改用户",
                 "parameters": [
                     {
                         "in": "formData",
@@ -1057,14 +1112,106 @@
                     },
                     "500": {
                         "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "description": "get Users by id",
+                "operationId": "UsersController.Get One",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The key for staticblock",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/.Users"
+                        }
+                    },
+                    "403": {
+                        "description": ":id is empty"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "users"
+                ],
+                "description": "update the Users",
+                "operationId": "UsersController.Put",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The id you want to update",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "body for Users content",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/.Users"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/.Users"
+                        }
+                    },
+                    "403": {
+                        "description": ":id is not int"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "users"
+                ],
+                "description": "delete the Users",
+                "operationId": "UsersController.Delete",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The id you want to delete",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{string} delete success!"
+                    },
+                    "403": {
+                        "description": "id is empty"
                     }
                 }
             }
         }
     },
+    "definitions": {
+        ".Users": {
+            "type": "object"
+        }
+    },
     "tags": [
         {
-            "name": "user",
+            "name": "users",
             "description": "User API\n"
         }
     ]

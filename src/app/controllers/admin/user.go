@@ -86,7 +86,7 @@ func (this *UserController) Useradd() {
 	user.Imgurl = this.GetString("imgurl")
 	user.Gender = 0
 	user.Age = 0
-	user.Telphone = 0
+	user.Telphone = "0"
 	user.Qq  = this.GetString("qq")
 	user.Weino = this.GetString("weino")
 	user.Signature = this.GetString("signature")

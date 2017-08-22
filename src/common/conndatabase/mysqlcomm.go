@@ -75,10 +75,10 @@ func Query(sql string ,obj interface{},args ...interface{}) (int64,error) {
 	return 0, err
 }
 
+
 func  RawSeter(sql string ,args ...interface{}) orm.RawSeter{
 	var rs orm.RawSeter
-	o := orm.NewOrm()
-	rs = o.Raw(sql,args)
+	rs = orm.NewOrm().Raw(sql,args)
 	return  rs
 }
 

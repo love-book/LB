@@ -16,9 +16,9 @@ func init() {
 	//文档启动命令  bee run -gendoc=true -downdoc=true
 	ns := beego.NewNamespace("/v1",
 		//beego.NSCond(FilterToken),
-		beego.NSNamespace("/user",
+		beego.NSNamespace("/users",
 			beego.NSInclude(
-				&controllers.UserController{},
+				&controllers.UsersController{},
 			),
 		),
 		beego.NSNamespace("/book",
@@ -43,7 +43,6 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
-
 	beego.Router("/api/index", &controllers.ApiController{}, "*:Index")
 	beego.Router("/user/login", &controllers.ApiController{}, "*:Login")
 	beego.Router("/api/test", &controllers.ApiController{}, "*:Test")

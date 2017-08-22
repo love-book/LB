@@ -9,11 +9,11 @@ import(
 
 const (
 	twepoch = int64(1417937700000)
-	DistrictIdBits = uint64(5)
-	NodeIdBits = uint64(5)
+	DistrictIdBits = uint(5)
+	NodeIdBits = uint(9)
 	maxNodeId = -1 ^ (-1 << NodeIdBits)
 	maxDistrictId = -1 ^ (-1 << DistrictIdBits)
-	sequenceBits = uint64(12)
+	sequenceBits = uint(10)
 	nodeIdShift = sequenceBits
 	DistrictIdshift = sequenceBits + NodeIdBits
 	timestampLeftShift = sequenceBits + NodeIdBits + DistrictIdBits
@@ -97,7 +97,6 @@ func (id * IdWorker) nextid () (int64,error){
 	if timestamp < id.lastTimestamp {
 		return  0 , errors.New(fmt.Sprintf("Clock moved backwards.  Refusing to generate id for %d milliseconds", id.lastTimestamp-timestamp))
 	}
-
 	if id.lastTimestamp == timestamp {
 		id.sequence = (id.sequence + 1) & sequenceMask
 		if id.sequence == 0 {

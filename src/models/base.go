@@ -10,6 +10,7 @@ import (
 	"strings"
 	"strconv"
 	"common/conndatabase"
+	"time"
 )
 
 
@@ -99,7 +100,8 @@ func GetPagesInfo(tableName string, start int, pagesize int, conditions string,f
 
 //获取ID主键
 func GetID() int64{
-	IdWorker,err := conndatabase.NewIdWorker(1,1)
+	time.Sleep(1 * time.Nanosecond)
+	IdWorker,err := conndatabase.NewIdWorker(2,1)
 	if err != nil{
 		fmt.Println(nil)
 	}

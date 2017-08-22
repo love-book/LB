@@ -7,6 +7,8 @@ import (
 	"models"
 	"fmt"
 	"strconv"
+	"github.com/astaxie/beego/orm"
+	"time"
 )
 
 type BooksController struct {
@@ -32,32 +34,25 @@ func (this *BooksController) BookList() {
 	length, _ := this.GetInt("length") //获取分页步长
 	draw, _ := this.GetInt32("draw") //获取请求次数
 	var conditions string = " "
-	id := this.GetString("bookid")
-	if id != ""{
-		conditions+= " and bookid ='"+id+"'"
+	if v := this.GetString("bookid");v != ""{
+		conditions+= " and bookid ='"+v+"'"
 	}
-	bookname := this.GetString("bookname")
-	if bookname != ""{
-		conditions+= " and bookname ="+bookname
+	if v := this.GetString("bookname");v != ""{
+		conditions+= " and bookname ="+v
 	}
-	author := this.GetString("author")
-	if author !="" {
-		conditions+= " and author = "+author
+	if v := this.GetString("author");v !="" {
+		conditions+= " and author = "+v
 	}
-	isbn := this.GetString("isbn")
-	if isbn !="" {
-		conditions+= " and isbn = "+isbn
+	if v := this.GetString("isbn");v !="" {
+		conditions+= " and isbn = "+v
 	}
-	state := this.GetString("state")
-	if state !="" {
-		conditions+= " and state = "+state
+	if v := this.GetString("state");v !="" {
+		conditions+= " and state = "+v
 	}
 	/*
-	starttime := this.GetString("starttime")
-	if starttime !="" {
+	if starttime := this.GetString("starttime");starttime !="" {
 		tm1, _ := time.Parse("01/02/2006", starttime)
-		endtime := this.GetString("endtime")
-		if endtime == ""{
+		if endtime := this.GetString("endtime");endtime == ""{
 			endtime = fmt.Sprintf("%d",time.Now().Unix())
 		}else{
 			tm2, _ := time.Parse("01/02/2006", endtime)
@@ -66,11 +61,7 @@ func (this *BooksController) BookList() {
 		starttime = fmt.Sprintf("%d",tm1)
 		conditions+= " and created_at  bettwen "+starttime+" and "+endtime
 	}*/
-	var books []models.Books
-	conditions += "  order by bookid desc"
-	var  TableName = "lb_books"
-	totalItem, res :=models.GetPagesInfo(TableName,start,length,conditions,"*")
-	res.QueryRows(&books)
+	books,totalItem :=models.GetBookList(start,length,conditions)
 	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":books}
 	this.renderJson(Json)
 }
@@ -88,6 +79,7 @@ func (this *BooksController) BookList() {
 // @Param   isbn      formData   string  false    "条形码"
 // @Param   describe      formData   string  false    "图书简介"
 // @Param   price    formData   string  false    "标价"
+// @Param   userid    formData   string  true    "用户id"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /bookadd [post]
@@ -96,13 +88,14 @@ func (this *BooksController) Bookadd() {
 	Uid := models.GetID()
 	model.Bookid   =  fmt.Sprintf("%d", Uid)
 	model.Bookname = this.GetString("bookname")
-	model.Author  = this.GetString("author")
+	model.Author   = this.GetString("author")
 	model.Imagehead = this.GetString("imageback")
 	model.Imageback = this.GetString("imageback")
 	model.Imageurl  = this.GetString("imgurl")
-	model.Describe = this.GetString("describe")
+	model.Describe  = this.GetString("describe")
 	model.Price,_ = this.GetUint16("price")
 	model.Isbn  =  this.GetString("isbn")
+	model.Userid  =  this.GetString("userid")
 	model.Depreciation = 0
 	model.State = 1
 	valid := validation.Validation{}
@@ -110,6 +103,7 @@ func (this *BooksController) Bookadd() {
 	valid.Required(model.Bookname, "bookname").Message("书名不能为空！")
 	valid.Required(model.Author,"author").Message("作者不能为空！")
 	valid.Required(model.Author,"isbn").Message("条形码不能为空！")
+	valid.Required(model.Userid,"userid").Message("用户编号不能为空！")
 	if valid.HasErrors() {
 		for _, err := range valid.Errors {
 			common.ErrSystem.Message = fmt.Sprint(err.Message)
@@ -117,17 +111,35 @@ func (this *BooksController) Bookadd() {
 		}
 	}
 	//查询数据库是否存在该条形码
-	var args = [1]string{model.Isbn}
-	sql := "select * from lb_books where isbn=? limit 1"
-	RawSeter := comm.RawSeter(sql,args)
-	var book  = models.Books{}
-	zerr := RawSeter.QueryRow(&book)
-	if zerr == nil{
+	book,res:= models.GetIbsn(model.Isbn)
+	if res == nil{
 		common.Actionsuccess.Message = "当前图书已添加"
-		common.Actionsuccess.MoreInfo =  &book
+		common.Actionsuccess.MoreInfo =  book
 		this.renderJson(common.Actionsuccess)
 	}
-	err := comm.Insert(&model)
+	var bookRack  = models.Bookrack{}
+	Bid := models.GetID()
+	bookRack.Bookqid   =  fmt.Sprintf("%d", Bid)
+	bookRack.Bookid = model.Bookid
+	bookRack.Userid = model.Userid
+	bookRack.Book_state = "1"
+	bookRack.Is_borrow = "1"
+	bookRack.Create_time = time.Now().Unix()
+	//事物提交
+	o := orm.NewOrm()
+	err := o.Begin()
+	if err == nil{
+		_,toRes :=  o.Insert(&model)
+		_,fromRes := o.Insert(&bookRack)
+		if toRes==nil && fromRes==nil{
+			err = o.Commit()
+			common.Actionsuccess.Message ="图书添加成功!"
+			common.Actionsuccess.MoreInfo = &model
+			this.renderJson(common.Actionsuccess)
+		}else{
+			err = o.Rollback()
+		}
+	}
 	if err != nil {
 		common.ErrSystem.Message = fmt.Sprint(err)
 		this.renderJson(common.ErrSystem)
@@ -140,7 +152,8 @@ func (this *BooksController) Bookadd() {
 // @Description 修改书籍
 // @Summary  修改书籍
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   bookname   formData   string  true    "书名"
+// @Param   bookid    formData   string  true    "图书编号"
+// @Param   bookname   formData   string  false    "书名"
 // @Param   author     formData   string  false   "作者"
 // @Param   imageurl  formData   string  false    "图书封面图"
 // @Param   imagehead    formData   string  false     "图书正面图"
@@ -163,51 +176,40 @@ func (this *BooksController) Bookupdate(){
 			this.renderJson(common.ErrSystem)
 		}
 	}
-	if err := comm.Read(&model);err == nil {
-		Bookname := this.GetString("bookname")
-		if Bookname != ""{
-			model.Bookname = Bookname
+	if err:= comm.Read(&model);err==nil{
+		if v := this.GetString("bookname");v != ""{
+			model.Bookname = v
 		}
-		Author := this.GetString("author")
-		if Author != ""{
-			model.Author = Author
+		if v := this.GetString("author");v != ""{
+			model.Author = v
 		}
-		imagehead := this.GetString("imagehead")
-		if imagehead != ""{
-			model.Imagehead = imagehead
+		if v := this.GetString("imagehead");v != ""{
+			model.Imagehead = v
 		}
-		imageback := this.GetString("imageback")
-		if imageback != ""{
-			model.Imageback = imageback
+		if v := this.GetString("imageback");v != ""{
+			model.Imageback = v
 		}
-		Imgurl := this.GetString("imgurl")
-		if Imgurl != ""{
-			model.Imageurl = Imgurl
+		if v := this.GetString("imgurl");v != ""{
+			model.Imageurl = v
 		}
-		isbn := this.GetString("isbn")
-		if isbn != ""{
-			model.Isbn = isbn
+		if v := this.GetString("isbn");v != ""{
+			model.Isbn = v
 		}
-		var Price ,_ = this.GetUint16("price")
-		if Price != 0{
-			model.Price = Price
+		if v ,_ := this.GetUint16("price");v != 0{
+			model.Price = v
 		}
-		Describe := this.GetString("describe")
-		if Describe != ""{
-			model.Describe = Describe
+		if v := this.GetString("describe");v != ""{
+			model.Describe = v
 		}
-		State ,_:= this.GetUint8("state")
-		if State != 0{
-			model.State = State
+		if v ,_:= this.GetUint8("state");v != 0{
+			model.State = v
 		}
-		if update:= comm.Update(&model);update ==nil{
+		if res:=models.UpdateBookById(&model);res == nil{
 			common.Actionsuccess.MoreInfo =  &model
 			this.renderJson(common.Actionsuccess)
 		}else{
 			common.ErrSystem.Message = "修改失败!"
 		}
-	}else{
-		common.ErrSystem.Message = "没有当前记录"
 	}
 	this.renderJson(common.ErrSystem)
 }
@@ -257,14 +259,10 @@ func (this *BooksController) Bookaddbycode() {
 		this.renderJson(common.ErrSystem)
 	}
 	//查询数据库是否存在该条形码
-	var args = [1]string{Isbn}
-	sql := "select * from lb_books where isbn=? limit 1"
-	RawSeter := comm.RawSeter(sql,args)
-	var book  = models.Books{}
-	zerr := RawSeter.QueryRow(&book)
-	if zerr == nil{
+	book,re:= models.GetIbsn(Isbn)
+	if re == nil{
 		common.Actionsuccess.Message = "当前图书已添加"
-		common.Actionsuccess.MoreInfo =  &book
+		common.Actionsuccess.MoreInfo =  book
 		this.renderJson(common.Actionsuccess)
 	}
 	//state 1:扫码正常添加，3:扫码没有查询到结果待补充
@@ -286,18 +284,19 @@ func (this *BooksController) Bookaddbycode() {
 	body :=  &res.Result.Showapi_res_body
 	Uid := models.GetID()
 	model := models.Books{}
-	model.Bookid   = fmt.Sprintf("%d", Uid)
+	model.Bookid   = fmt.Sprintf("%d", &Uid)
 	model.Bookname = body.GoodsName
 	model.Author   = body.ManuName
 	model.Imagehead = ""
 	model.Imageback = ""
-	model.Imageurl  = body.Img
-	model.Describe =body.GoodsName
+	model.Imageurl = body.Img
+	model.Describe = body.GoodsName
 	price, _:= strconv.ParseUint(body.Price, 10, 16)
 	model.Price  = uint16(price)
 	model.Isbn   = Isbn
 	model.Depreciation = 0
 	model.State = state
+	model.Userid = "1"
 	valid := validation.Validation{}
 	valid.Required(model.Bookid,  "bookid").Message("书籍编号不能为空！")
 	valid.Required(model.Bookname, "bookname").Message("书名不能为空！")
@@ -308,7 +307,29 @@ func (this *BooksController) Bookaddbycode() {
 			this.renderJson(common.ErrSystem)
 		}
 	}
-	err := comm.Insert(&model)
+	var bookRack  = models.Bookrack{}
+	Bid := models.GetID()
+	bookRack.Bookqid   =  fmt.Sprintf("%d", Bid)
+	bookRack.Bookid = model.Bookid
+	bookRack.Userid = model.Userid
+	bookRack.Book_state = "1"
+	bookRack.Is_borrow = "1"
+	bookRack.Create_time = time.Now().Unix()
+	//事物提交
+	o := orm.NewOrm()
+	err := o.Begin()
+	if err == nil{
+		_,toRes :=  o.Insert(&model)
+		_,fromRes := o.Insert(&bookRack)
+		if toRes==nil && fromRes==nil{
+			err = o.Commit()
+			common.Actionsuccess.Message ="当前图书添加成功!"
+			common.Actionsuccess.MoreInfo = &model
+			this.renderJson(common.Actionsuccess)
+		}else{
+			err = o.Rollback()
+		}
+	}
 	if err != nil {
 		common.ErrSystem.Message = fmt.Sprint(err)
 		this.renderJson(common.ErrSystem)

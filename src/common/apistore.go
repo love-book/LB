@@ -41,10 +41,9 @@ type Showapi_res_body struct {
 
 
 //获取条码信息
-func  GetBarcodeInfo(code string) (BarcodeInfo, error) {
+func  GetBarcodeInfo(code string) (uinf *BarcodeInfo,err error) {
 	barcodeUrl  :=  beego.AppConfig.String("barcodeUrl")
 	barcodeAppkey  :=  beego.AppConfig.String("barcodeAppkey")
-	var uinf BarcodeInfo
 	url := fmt.Sprintf("%s?code="+code+"&appkey=%s", barcodeUrl, barcodeAppkey)
 	// retry
 	for i := 0; i < apiRetryNum; i++ {
@@ -68,7 +67,7 @@ func  GetBarcodeInfo(code string) (BarcodeInfo, error) {
 			if i < apiRetryNum-1 {
 				continue
 			}
-			return uinf, err
+			return nil, err
 		}
 		break // success
 	}
