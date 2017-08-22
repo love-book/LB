@@ -19,9 +19,8 @@ type BooksController struct {
 // @Summary  获取图书列表
 // @Description 获取图书列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   start     formData   int  false      "获取起始位置"
-// @Param   length    formData   int  false      "获取分页步长"
-// @Param   draw      formData   int  false      "获取请求次数"
+// @Param   length    formData   int  false      "分页步长"
+// @Param   draw      formData   int  false      "请求页数"
 // @Param   bookname  formData   string  false   "书名"
 // @Param   author    formData   string  false   "作者"
 // @Param   bookid    formData   string  false   "图书编号"
@@ -30,9 +29,8 @@ type BooksController struct {
 // @Failure 500 服务器错误!
 // @router /booklist [post]
 func (this *BooksController) BookList() {
-	start, _ := this.GetInt("start") //获取起始位置
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt32("draw") //获取请求次数
+	length, _ := this.GetInt("length",10) //获取分页步长
+	draw, _ := this.GetInt("draw",1) //获取请求次数
 	var conditions string = " "
 	if v := this.GetString("bookid");v != ""{
 		conditions+= " and bookid ='"+v+"'"
@@ -61,8 +59,8 @@ func (this *BooksController) BookList() {
 		starttime = fmt.Sprintf("%d",tm1)
 		conditions+= " and created_at  bettwen "+starttime+" and "+endtime
 	}*/
-	books,totalItem :=models.GetBookList(start,length,conditions)
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":books}
+	books :=models.GetBookList((draw-1) * length,length,conditions)
+	Json := map[string]interface{}{"draw":draw,"data":books}
 	this.renderJson(Json)
 }
 

@@ -24,13 +24,14 @@ func init()  {
 }
 
 
-func  BookOrderListData(start int,length int,conditions string) (order []*Bookorder,total int){
-	if start < 1 {
-		start = 0
-	}
-	if length == 0 {
-		length = 15
-	}
+func  BookOrderListData(start int,length int,conditions string) (order []*Bookorder){
+	var  rowsSql  = "select * from  lb_bookorder  where true "+conditions+"  order by pushtime desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRows(&order)
+	return  order
+}
+
+func  BookOrderListDatback(start int,length int,conditions string) (order []*Bookorder,total int){
 	var  countSql = "select count(*) from  lb_bookorder  where true "+conditions
 	var  rowsSql  = "select * from  lb_bookorder  where true "+conditions+"  order by pushtime desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()

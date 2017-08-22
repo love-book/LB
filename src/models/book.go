@@ -32,13 +32,15 @@ func (this *Books) GetBookinfo (bookid int64) Books  {
 }
 
 //获取图书列表
-func  GetBookList(start int,length int,conditions string) (books []*Books,totalItem int){
-	if start < 1 {
-		start = 0
-	}
-	if length == 0 {
-		length = 15
-	}
+func  GetBookList(start int,length int,conditions string) (books []*Books){
+	var  rowsSql  = "select *  from  lb_books where true "+conditions+"  order by bookid desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRows(&books)
+	return  books
+}
+
+//获取图书列表后端
+func  GetBookListBack(start int,length int,conditions string) (books []*Books,totalItem int){
 	var  countSql = "select count(*) from  lb_books  where true "+conditions
 	var  rowsSql  = "select *  from  lb_books where true "+conditions+"  order by bookid desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()

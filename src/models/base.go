@@ -13,16 +13,16 @@ import (
 	"time"
 )
 
-
+/*
 func init() {
-	/*dbhost := beego.AppConfig.String("dbhost")
+dbhost := beego.AppConfig.String("dbhost")
 dbport := beego.AppConfig.String("dbport")
 dbuser := beego.AppConfig.String("dbuser")
 dbpassword := beego.AppConfig.String("dbpassword")
 dbname := beego.AppConfig.String("dbname")
 dbprefix := beego.AppConfig.String("dbprefix")
 if dbport == "" {
-	dbport = "3306"
+dbport = "3306"
 }
 dburl := dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?charset=utf8"
 orm.RegisterDataBase("default", "mysql", dburl,30,30)
@@ -40,14 +40,13 @@ orm.SetMaxOpenConns("default", 30)
 设置数据库的最大数据库连接。
 第四个参数和第五个参数也可以不传值，会使用数据库默认值
 
-	orm.RegisterModelWithPrefix(dbprefix,new(User))
-	if beego.AppConfig.String("runmode") == "dev" {
-		orm.Debug = true
-		// 自动建表
-		//orm.RunSyncdb("default", false, true)
-	}
-  */
+orm.RegisterModelWithPrefix(dbprefix,new(User))
+if beego.AppConfig.String("runmode") == "dev" {
+	orm.Debug = true
+	// 自动建表
+	//orm.RunSyncdb("default", false, true)
 }
+}*/
 
 
 func Md5(buf []byte) string {

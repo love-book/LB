@@ -32,8 +32,8 @@ type BookorderController struct {
 // @Failure 500 服务器错误!
 // @router /orderList [post]
 func (this *BookorderController) Orderlist() {
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt("draw") //获取请求次数
+	length, _ := this.GetInt("length",10) //获取分页步长
+	draw, _ := this.GetInt("draw",1) //获取请求次数
 	var conditions string = " "
 	if v := this.GetString("bookid");v !="" {
 	   conditions+= " and JSON_EXTRACT(books,'$.bookid') = '"+v+"'"
@@ -65,11 +65,7 @@ func (this *BookorderController) Orderlist() {
 	if v := this.GetString("bookqid");v !="" {
 		conditions+= " and bookqid = '"+v+"'"
 	}
-	var start int = 0
-	if draw  > 0 {
-		start = (draw-1)*length
-	}
-	books, totalItem :=models.BookOrderListData(start,length,conditions)
+	books :=models.BookOrderListData((draw-1)*length,length,conditions)
 	var resPonse []interface{}
 	book  := map[string]interface{}{}
 	JsonBook  := map[string]interface{}{}
@@ -106,7 +102,7 @@ func (this *BookorderController) Orderlist() {
 		}
 		resPonse = append(resPonse,&book)
 	}
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":resPonse}
+	Json := map[string]interface{}{"draw":draw,"data":resPonse}
 	this.renderJson(Json)
 }
 

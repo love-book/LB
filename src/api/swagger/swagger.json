@@ -129,22 +129,15 @@
                 "parameters": [
                     {
                         "in": "formData",
-                        "name": "start",
-                        "description": "获取起始位置",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    {
-                        "in": "formData",
                         "name": "length",
-                        "description": "获取分页步长",
+                        "description": "分页步长",
                         "type": "integer",
                         "format": "int64"
                     },
                     {
                         "in": "formData",
                         "name": "draw",
-                        "description": "获取请求次数",
+                        "description": "请求页数",
                         "type": "integer",
                         "format": "int64"
                     },
@@ -396,7 +389,7 @@
                     {
                         "in": "formData",
                         "name": "length",
-                        "description": "获取分页步长",
+                        "description": "分页步长",
                         "type": "string"
                     },
                     {

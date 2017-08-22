@@ -24,13 +24,14 @@ func init()  {
 	orm.RegisterModelWithPrefix("lb_",new(Booknews))
 }
 
-func  BooknewsListData(start int,length int,conditions string) (books []*Booknews,total int){
-	if start < 1 {
-		start = 0
-	}
-	if length == 0 {
-		length = 15
-	}
+func  BooknewsListData(start int,length int,conditions string) (books []*Booknews){
+    var  rowsSql  = "select * from  lb_booknews  where true "+conditions+"  order by update_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRows(&books)
+	return  books
+}
+
+func  BooknewsListDataBack(start int,length int,conditions string) (books []*Booknews,total int){
 	var  countSql = "select count(*) from  lb_booknews  where true "+conditions
 	var  rowsSql  = "select * from  lb_booknews  where true "+conditions+"  order by update_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()
@@ -38,5 +39,4 @@ func  BooknewsListData(start int,length int,conditions string) (books []*Booknew
 	o.Raw(rowsSql).QueryRows(&books)
 	return  books,total
 }
-
 

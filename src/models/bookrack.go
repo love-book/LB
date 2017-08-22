@@ -22,13 +22,14 @@ func init()  {
 }
 
 
-func  BooksrackList(start int,length int,conditions string) (books []*BookrackList,totalItem int){
-	if start < 1 {
-		start = 0
-	}
-	if length == 0 {
-		length = 15
-	}
+func  BooksrackList(start int,length int,conditions string) (books []*BookrackList){
+    var  rowsSql  = "select r.*,b.*,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRows(&books)
+	return  books
+}
+
+func  BooksrackListBack(start int,length int,conditions string) (books []*BookrackList,totalItem int){
 	var  countSql = "select count(*) from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions
 	var  rowsSql  = "select r.*,b.*,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()
@@ -36,6 +37,8 @@ func  BooksrackList(start int,length int,conditions string) (books []*BookrackLi
 	o.Raw(rowsSql).QueryRows(&books)
 	return  books,totalItem
 }
+
+
 //根据id查询
 func GetBookById(bookqid string) (v *Bookrack, err error) {
 	o := orm.NewOrm()

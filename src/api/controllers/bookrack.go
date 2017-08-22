@@ -32,8 +32,8 @@ type BooksrackController struct {
 // @Failure 500 服务器错误!
 // @router /bookracklist [post]
 func (this *BooksrackController) Bookracklist() {
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt("draw") //获取请求次数
+	length, _ := this.GetInt("length",10) //获取分页步长
+	draw, _ := this.GetInt("draw",1) //获取请求次数
 	var conditions string = " "
 	if 	v := this.GetString("userid");v != ""{
 		conditions+= " and r.userid ='"+v+"'"
@@ -62,12 +62,8 @@ func (this *BooksrackController) Bookracklist() {
 	if v := this.GetString("age");v !="" {
 		conditions+= " and u.age ="+v
 	}
-	var start int = 0
-	if draw  > 0 {
-		start = (draw-1)*length
-	}
-	books,totalItem := models.BooksrackList(start,length,conditions)
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":books}
+	books := models.BooksrackList((draw-1)*length,length,conditions)
+	Json := map[string]interface{}{"draw":draw,"data":books}
 	this.renderJson(Json)
 }
 

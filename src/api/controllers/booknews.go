@@ -19,7 +19,7 @@ type BooknewsController struct {
 // @Summary  借书消息列表
 // @Description  借书消息列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   length     formData   string  false      "获取分页步长"
+// @Param   length     formData   string  false      "分页步长"
 // @Param   draw       formData   string  false      "当前页"
 // @Param   userid     formData   string  true      "用户编号"
 // @Param   bookqid    formData   string  false     "图书唯一编号"
@@ -28,8 +28,8 @@ type BooknewsController struct {
 // @Failure 500 服务器错误!
 // @router /newsList [post]
 func (this *BooknewsController) Newslist() {
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt("draw") //获取请求次数
+	length, _ := this.GetInt("length",10)//获取分页步长
+	draw, _ := this.GetInt("draw",1)  //当前页
 	var conditions string = " "
 	if v := this.GetString("userid");v != ""{
 		conditions+= " and userid_from ='"+v+"'"
@@ -43,11 +43,8 @@ func (this *BooknewsController) Newslist() {
 	if 	v := this.GetString("order_state");v !="" {
 		conditions+= " and order_state = '"+v+"'"
 	}
-	var start int = 0
-	if draw  > 0 {
-		start = (draw-1)*length
-	}
-	books,totalItem := models.BooknewsListData(start,length,conditions)
+
+	books := models.BooknewsListData((draw-1) * length,length,conditions)
 	var resPonse []interface{}
 	book  := map[string]interface{}{}
 	JsonBook  := map[string]interface{}{}
@@ -85,7 +82,7 @@ func (this *BooknewsController) Newslist() {
 		}
 		resPonse = append(resPonse,&book)
 	}
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":resPonse}
+	Json := map[string]interface{}{"draw":draw,"data":resPonse}
 	this.renderJson(Json)
 }
 
