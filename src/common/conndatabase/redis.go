@@ -7,7 +7,10 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/garyburd/redigo/redis"
 )
-
+//设置缓存key
+var (
+	LocationGeo = "LocationGeo"
+)
 
 var (
 	Pool *redis.Pool
@@ -74,7 +77,6 @@ func poolClose() {
 }
 
 func DealConn(comm string,key string) ([]byte,error) {
-
 		conn := Pool.Get()
 		defer conn.Close()
 		var data []byte
@@ -82,9 +84,7 @@ func DealConn(comm string,key string) ([]byte,error) {
 		if err != nil {
 			return nil, err
 		}
-
-
-	return data,err
+	   return data,err
 }
 
 

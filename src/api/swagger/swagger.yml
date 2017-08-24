@@ -585,117 +585,75 @@ paths:
             "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
-  /users/:
-    get:
-      tags:
-      - users
-      description: get Users
-      operationId: UsersController.Get All
-      parameters:
-      - in: query
-        name: query
-        description: Filter. e.g. col1:v1,col2:v2 ...
-        type: string
-      - in: query
-        name: fields
-        description: Fields returned. e.g. col1,col2 ...
-        type: string
-      - in: query
-        name: sortby
-        description: Sorted-by fields. e.g. col1,col2 ...
-        type: string
-      - in: query
-        name: order
-        description: Order corresponding to each sortby field, if single value, apply
-          to all sortby fields. e.g. desc,asc ...
-        type: string
-      - in: query
-        name: limit
-        description: Limit the size of result set. Must be an integer
-        type: string
-      - in: query
-        name: offset
-        description: Start position of result set. Must be an integer
-        type: string
-      responses:
-        "200":
-          schema:
-            $ref: '#/definitions/.Users'
-        "403": {}
+  /users/addlocaltionbyid:
     post:
       tags:
       - users
-      description: create Users
-      operationId: UsersController.Post
+      summary: 用户上传地理位置
+      description: 用户上传地理位置
+      operationId: UsersController.用户上传地理位置
       parameters:
-      - in: body
-        name: body
-        description: body for Users content
+      - in: formData
+        name: openid
+        description: openid
         required: true
-        schema:
-          $ref: '#/definitions/.Users'
-      responses:
-        "201":
-          description: '{int} models.Users'
-        "403":
-          description: body is empty
-  /users/{id}:
-    get:
-      tags:
-      - users
-      description: get Users by id
-      operationId: UsersController.Get One
-      parameters:
-      - in: path
-        name: id
-        description: The key for staticblock
+        type: string
+      - in: formData
+        name: lang
+        description: 纬度
+        required: true
+        type: string
+      - in: formData
+        name: lat
+        description: 经度
         required: true
         type: string
       responses:
         "200":
-          schema:
-            $ref: '#/definitions/.Users'
+          description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
         "403":
-          description: :id is empty
-    put:
+          description: :openid is empty
+  /users/getlocaltionbyid:
+    post:
       tags:
       - users
-      description: update the Users
-      operationId: UsersController.Put
+      summary: 根据openid获取地理位置
+      description: 根据openid获取地理位置
+      operationId: UsersController.根据openid获取地理位置
       parameters:
-      - in: path
-        name: id
-        description: The id you want to update
-        required: true
-        type: string
-      - in: body
-        name: body
-        description: body for Users content
-        required: true
-        schema:
-          $ref: '#/definitions/.Users'
-      responses:
-        "200":
-          schema:
-            $ref: '#/definitions/.Users'
-        "403":
-          description: :id is not int
-    delete:
-      tags:
-      - users
-      description: delete the Users
-      operationId: UsersController.Delete
-      parameters:
-      - in: path
-        name: id
-        description: The id you want to delete
+      - in: formData
+        name: openid
+        description: openid
         required: true
         type: string
       responses:
         "200":
-          description: '{string} delete success!'
+          description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
         "403":
-          description: id is empty
+          description: :openid is empty
+  /users/getusersbylocaltion:
+    post:
+      tags:
+      - users
+      summary: 根据openid获取附近的人
+      description: 根据openid获取附近的人
+      operationId: UsersController.根据openid获取附近的人
+      parameters:
+      - in: formData
+        name: openid
+        description: openid
+        required: true
+        type: string
+      - in: formData
+        name: radius
+        description: 方圆多少米范围内
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
+        "403":
+          description: :openid is empty
   /users/useradd:
     post:
       tags:
@@ -863,9 +821,6 @@ paths:
             "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
-definitions:
-  .Users:
-    type: object
 tags:
 - name: users
   description: |

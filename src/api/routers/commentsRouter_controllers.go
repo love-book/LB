@@ -153,41 +153,25 @@ func init() {
 
 	beego.GlobalControllerRouter["api/controllers:UsersController"] = append(beego.GlobalControllerRouter["api/controllers:UsersController"],
 		beego.ControllerComments{
-			Method: "Post",
-			Router: `/`,
+			Method: "GetLocaltionByID",
+			Router: `/getlocaltionbyid`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["api/controllers:UsersController"] = append(beego.GlobalControllerRouter["api/controllers:UsersController"],
 		beego.ControllerComments{
-			Method: "GetOne",
-			Router: `/:id`,
-			AllowHTTPMethods: []string{"get"},
+			Method: "GetUsersByLocaltion",
+			Router: `/getusersbylocaltion`,
+			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["api/controllers:UsersController"] = append(beego.GlobalControllerRouter["api/controllers:UsersController"],
 		beego.ControllerComments{
-			Method: "GetAll",
-			Router: `/`,
-			AllowHTTPMethods: []string{"get"},
-			MethodParams: param.Make(),
-			Params: nil})
-
-	beego.GlobalControllerRouter["api/controllers:UsersController"] = append(beego.GlobalControllerRouter["api/controllers:UsersController"],
-		beego.ControllerComments{
-			Method: "Put",
-			Router: `/:id`,
-			AllowHTTPMethods: []string{"put"},
-			MethodParams: param.Make(),
-			Params: nil})
-
-	beego.GlobalControllerRouter["api/controllers:UsersController"] = append(beego.GlobalControllerRouter["api/controllers:UsersController"],
-		beego.ControllerComments{
-			Method: "Delete",
-			Router: `/:id`,
-			AllowHTTPMethods: []string{"delete"},
+			Method: "AddLocaltionByID",
+			Router: `/addlocaltionbyid`,
+			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 

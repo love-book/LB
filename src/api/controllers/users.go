@@ -6,9 +6,6 @@ import (
 	"time"
 	"common"
 	"fmt"
-	"encoding/json"
-	"strings"
-	"errors"
 )
 
 // User API
@@ -83,7 +80,7 @@ func (this *UsersController) Useradd() {
 	user.Wnickname = this.GetString("wnickname")
 	user.Wimgurl = this.GetString("wimgurl")
 	user.Imgurl = this.GetString("imgurl")
-	var Gender,_ = this.GetInt8("gender")
+	var Gender,_ = this.GetInt64("gender")
 	if Gender != 0{
 		user.Gender = Gender
 	}
@@ -164,7 +161,7 @@ func (this *UsersController) Userupdate(){
 		if Imgurl != ""{
 			user.Imgurl = Imgurl
 		}
-		var Gender,_ = this.GetInt8("gender")
+		var Gender,_ = this.GetInt64("gender")
 		if Gender != 0{
 			user.Gender = Gender
 		}
@@ -204,139 +201,70 @@ func (this *UsersController) Userupdate(){
 }
 
 
-// Post ...
-// @Title Post
-// @Description create Users
-// @Param	body		body 	models.Users	true		"body for Users content"
-// @Success 201 {int} models.Users
-// @Failure 403 body is empty
-// @router / [post]
-func (c *UsersController) Post() {
-	var v models.Users
-	json.Unmarshal(c.Ctx.Input.RequestBody, &v)
-	if _, err := models.AddUsers(&v); err == nil {
-		c.Ctx.Output.SetStatus(201)
-		c.Data["json"] = v
-	} else {
-		c.Data["json"] = err.Error()
+// 根据openid获取地理位置
+// @Title  根据openid获取地理位置
+// @Summary   根据openid获取地理位置
+// @Description 根据openid获取地理位置
+// @Param	openid	formData  string	true  "openid"
+// @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
+// @Failure 403 :openid is empty
+// @router /getlocaltionbyid [post]
+func (this *UsersController) GetLocaltionByID() {
+	Openid := this.GetString("openid")
+	if Openid == "" {
+		common.ErrSystem.Message =  "openid不能为空!"
+		this.renderJson(common.ErrSystem)
 	}
-	c.ServeJSON()
+	l,_ := models.GetLocationByID(Openid)
+	l["openid"] = Openid
+	this.Data["json"] = l
+	this.ServeJSON()
 }
 
-// GetOne ...
-// @Title Get One
-// @Description get Users by id
-// @Param	id		path 	string	true		"The key for staticblock"
-// @Success 200 {object} models.Users
-// @Failure 403 :id is empty
-// @router /:id [get]
-func (c *UsersController) GetOne() {
-	idStr := c.Ctx.Input.Param(":id")
-	v, err := models.GetUsersById(idStr)
-	if err != nil {
-		c.Data["json"] = err.Error()
-	} else {
-		c.Data["json"] = v
+
+// 根据openid获取附近的人
+// @Title  根据openid获取附近的人
+// @Summary   根据openid获取附近的人
+// @Description 根据openid获取附近的人
+// @Param	openid	formData  string	true  "openid"
+// @Param	radius	formData  string	true  "方圆多少米范围内"
+// @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
+// @Failure 403 :openid is empty
+// @router /getusersbylocaltion [post]
+func (this *UsersController) GetUsersByLocaltion() {
+	Openid := this.GetString("openid")
+	Radius,_:= this.GetInt64("radius",1000)
+	if Openid == "" {
+		common.ErrSystem.Message =  "提交参数错误!"
+		this.renderJson(common.ErrSystem)
 	}
-	c.ServeJSON()
+	re,err := models.GetUsersByLocaltion(Openid,Radius)
+	fmt.Println(err)
+	this.Data["json"] =  re
+	this.ServeJSON()
 }
 
-// GetAll ...
-// @Title Get All
-// @Description get Users
-// @Param	query	query	string	false	"Filter. e.g. col1:v1,col2:v2 ..."
-// @Param	fields	query	string	false	"Fields returned. e.g. col1,col2 ..."
-// @Param	sortby	query	string	false	"Sorted-by fields. e.g. col1,col2 ..."
-// @Param	order	query	string	false	"Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc ..."
-// @Param	limit	query	string	false	"Limit the size of result set. Must be an integer"
-// @Param	offset	query	string	false	"Start position of result set. Must be an integer"
-// @Success 200 {object} models.Users
-// @Failure 403
-// @router / [get]
-func (c *UsersController) GetAll() {
-	var fields []string
-	var sortby []string
-	var order []string
-	var query = make(map[string]string)
-	var limit int64 = 10
-	var offset int64
 
-	// fields: col1,col2,entity.col3
-	if v := c.GetString("fields"); v != "" {
-		fields = strings.Split(v, ",")
+// 用户上传地理位置
+// @Title  用户上传地理位置
+// @Summary   用户上传地理位置
+// @Description 用户上传地理位置
+// @Param	openid	formData  string	true  "openid"
+// @Param	lang	formData  string	true  "纬度"
+// @Param	lat  	formData  string	true  "经度"
+// @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
+// @Failure 403 :openid is empty
+// @router /addlocaltionbyid [post]
+func (this *UsersController) AddLocaltionByID() {
+	Openid := this.GetString("openid")
+	Lang,_ := this.GetFloat("lang")
+	Lat,_ := this.GetFloat("lat")
+	if Openid == "" || Lang== 0 || Lat== 0{
+		common.ErrSystem.Message =  "提交参数错误!"
+		this.renderJson(common.ErrSystem)
 	}
-	// limit: 10 (default is 10)
-	if v, err := c.GetInt64("limit"); err == nil {
-		limit = v
-	}
-	// offset: 0 (default is 0)
-	if v, err := c.GetInt64("offset"); err == nil {
-		offset = v
-	}
-	// sortby: col1,col2
-	if v := c.GetString("sortby"); v != "" {
-		sortby = strings.Split(v, ",")
-	}
-	// order: desc,asc
-	if v := c.GetString("order"); v != "" {
-		order = strings.Split(v, ",")
-	}
-	// query: k:v,k:v
-	if v := c.GetString("query"); v != "" {
-		for _, cond := range strings.Split(v, ",") {
-			kv := strings.SplitN(cond, ":", 2)
-			if len(kv) != 2 {
-				c.Data["json"] = errors.New("Error: invalid query key/value pair")
-				c.ServeJSON()
-				return
-			}
-			k, v := kv[0], kv[1]
-			query[k] = v
-		}
-	}
-
-	l, err := models.GetAllUsers(query, fields, sortby, order, offset, limit)
-	if err != nil {
-		c.Data["json"] = err.Error()
-	} else {
-		c.Data["json"] = l
-	}
-	c.ServeJSON()
-}
-
-// Put ...
-// @Title Put
-// @Description update the Users
-// @Param	id		path 	string	true		"The id you want to update"
-// @Param	body		body 	models.Users	true		"body for Users content"
-// @Success 200 {object} models.Users
-// @Failure 403 :id is not int
-// @router /:id [put]
-func (c *UsersController) Put() {
-	idStr := c.Ctx.Input.Param(":id")
-	v := models.Users{Userid: idStr}
-	json.Unmarshal(c.Ctx.Input.RequestBody, &v)
-	if err := models.UpdateUsersById(&v); err == nil {
-		c.Data["json"] = "OK"
-	} else {
-		c.Data["json"] = err.Error()
-	}
-	c.ServeJSON()
-}
-
-// Delete ...
-// @Title Delete
-// @Description delete the Users
-// @Param	id		path 	string	true		"The id you want to delete"
-// @Success 200 {string} delete success!
-// @Failure 403 id is empty
-// @router /:id [delete]
-func (c *UsersController) Delete() {
-	idStr := c.Ctx.Input.Param(":id")
-	if err := models.DeleteUsers(idStr); err == nil {
-		c.Data["json"] = "OK"
-	} else {
-		c.Data["json"] = err.Error()
-	}
-	c.ServeJSON()
+	err:= models.AddLocationByID(Openid,Lang,Lat)
+	fmt.Println(err)
+	this.Data["json"] = Openid
+	this.ServeJSON()
 }

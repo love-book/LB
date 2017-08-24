@@ -40,13 +40,13 @@ type Request struct {
 	Latitude  float64
 	Longitude float64
 	Precision float64
-	ScanCodeInfo  ScanCodeInfo   //扫码带提示
+	//扫码带提示
+	ScanCodeInfo  struct {
+		ScanResult string
+		ScanType   string
+	}
 }
 
-type ScanCodeInfo struct {
-	ScanResult string
-	ScanType   string
-}
 
 // validate request
 func (this *Request) IsValid(rw http.ResponseWriter, req *http.Request) bool {

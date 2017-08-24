@@ -9,6 +9,8 @@ import(
 	"strings"
 	"errors"
 	"reflect"
+	comm "common/conndatabase"
+	"github.com/garyburd/redigo/redis"
 )
 
 type  Users struct {
@@ -18,7 +20,7 @@ type  Users struct {
 	Wimgurl    	string 	`json:"wimgurl"`
 	Nickname  	string 	`json:"nickname"`
 	Imgurl    	string 	`json:"imgurl" `
-	Gender  	int8  	`json:"gender"`
+	Gender  	int64  	`json:"gender"`
 	Age   		int32 	`json:"age"`
 	Telphone  	string  `json:"telphone"`
 	Qq  		string  `json:"qq"`
@@ -74,6 +76,14 @@ func GetUsersByIds(ids []string)(u []*Users,err error){
 	return nil,err
 }
 
+
+//根据OpenId查询用户
+func GetUsersByOpenId(id []string)(u *Users,err error){
+	sql:= "select * from lb_users  where openid =? limit 1"
+	RawSeter := orm.NewOrm().Raw(sql,id)
+	err = RawSeter.QueryRow(&u)
+	return
+}
 
 // AddUsers insert a new Users into database and returns
 // last inserted Id on success.
@@ -195,5 +205,68 @@ func DeleteUsers(id string) (err error) {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}
+	return
+}
+
+//根据openid获取用户经纬度
+func  GetLocationByID(openid string)(l map[string]interface{},err error){
+	rc := comm.Pool.Get()
+	defer rc.Close()
+	v,err := redis.Positions(rc.Do("GEOPOS",comm.LocationGeo,openid))
+	l = make(map[string]interface{},len(v))
+	for _,vs := range v{
+		l["long"] = vs[0]
+		l["lat"]  = vs[1]
+		break
+	}
+	return
+}
+
+
+//根据openid获取附近的人
+func  GetUsersByLocaltion(openid string,radius int64)(re []map[string]interface{},err error){
+	rc := comm.Pool.Get()
+	defer rc.Close()
+	re,err = RadiusByMember(rc.Do("GEORADIUSBYMEMBER",comm.LocationGeo,openid,radius,"m","WITHDIST"))
+	return
+}
+
+func RadiusByMember(result interface{}, err error) ([]map[string]interface{},error) {
+	values, err := redis.Values(result, err)
+	if err != nil {
+		return  nil,err
+	}
+	radiusMap := make([]map[string]interface{}, len(values))
+	for i := range values {
+		if values[i] == nil {
+			continue
+		}
+		fmt.Println(values[i])
+		p, ok := values[i].([]interface{})
+		if !ok {
+			return nil,fmt.Errorf("redigo: unexpected element type for interface slice, got type %T", values[i])
+		}
+		member, err := redis.String(p[0], nil)
+		if err != nil {
+			return nil, err
+		}
+		radius, err := redis.Float64(p[1], nil)
+		if err != nil {
+			return nil, err
+		}
+		res := make(map[string]interface{},len(p))
+		res["member"] = member
+		res["radius"] = radius
+		radiusMap[i] = res
+	}
+	return radiusMap,nil
+}
+
+//用户上传地理位置
+func  AddLocationByID(openid string,lang float64,lat float64)(err error){
+	rc := comm.Pool.Get()
+	defer rc.Close()
+	v,err := rc.Do("GEOADD",comm.LocationGeo,lang,lat,openid)
+	fmt.Println(v)
 	return
 }

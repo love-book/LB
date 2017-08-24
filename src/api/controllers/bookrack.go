@@ -149,6 +149,7 @@ func (this *BooksrackController) Bookrackaddbysn() {
 			res.Result.Showapi_res_body.Price = "0"
 		}
 		body :=  &res.Result.Showapi_res_body
+		model := models.Books{}
 		Uid := models.GetID()
 		model.Bookid   = fmt.Sprintf("%d", Uid)
 		model.Bookname = body.GoodsName
@@ -173,13 +174,12 @@ func (this *BooksrackController) Bookrackaddbysn() {
 				this.renderJson(common.ErrSystem)
 			}
 		}
-		err = comm.Insert(&model)
+		err = comm.Insert(model)
 		if err != nil{
 			common.ErrSystem.Message = "没有当前图书信息!"
 			this.renderJson(common.ErrSystem)
 		}
 	}
-	//加入用户书架
 	book := models.Bookrack{}
 	book.Userid  = userid
 	book.Bookid = model.Bookid
@@ -187,6 +187,7 @@ func (this *BooksrackController) Bookrackaddbysn() {
 	book.Is_borrow  = "1"
 	_,err = models.GetBookByUidAndBookId(userid,book.Bookid)
 	if err != nil {
+		//加入用户书架
 		id := models.GetID()
 		book.Bookqid = fmt.Sprintf("%d",id)
 		t:=time.Now().Unix()
