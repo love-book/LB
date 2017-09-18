@@ -4,8 +4,6 @@ import (
 	comm "common/conndatabase"
 	"models"
 	"time"
-	"common"
-	"fmt"
 )
 
 // User API
@@ -13,235 +11,185 @@ type UsersController struct {
 	ApiController
 }
 
-
+// @Title 上传文件
+// @Description 上传文件
+// @Summary  上传文件
+// @Success 200  {<br/>  "url": "url" <br/> }
+// @Param   fname  formData   file  true   "文件"
+// @Failure 100 错误提示信息!
+// @Failure 500 服务器错误!
+// @Consumes  multipart/form-data
+// @router /uploadfile [post]
+func (this *UsersController) Uploadfile() {
+	f, h, err := this.GetFile("fname")
+	if err != nil {
+		this.Rsp(false, err.Error(),"")
+	}
+	defer f.Close()
+	FilesUrl := comm.FileUrl()
+	url := FilesUrl + h.Filename
+	file:=this.SaveToFile("fname", "static/upload/" + h.Filename) // 保存位置在 static/upload, 没有文件夹要先创建
+	if  file != nil {
+		this.Rsp(false, file.Error(),"")
+	}
+	this.Rsp(true, "上传成功!", url)
+}
 // @Title 获取用户信息
 // @Summary  获取用户信息
 // @Description 获取用户信息
 // @Success 200  {<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname": "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl": "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号", <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address": "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token     header     string  true     "token"
 // @Param   userid    formData   string  false    "用户编号"
 // @Param   nickname  formData   string  false    "昵称"
 // @Param   telphone  formData   string  false    "手机号"
 // @Failure 500 服务器错误!
 // @router /userinfo [post]
 func (this *UsersController) Userinfo() {
-	var user  models.Users
 	var conditions string = ""
-	Uid := this.GetString("userid")
-	if Uid != ""{
-		conditions+= " and userid ='"+Uid+"'"
+	if v := this.GetString("userid");v != ""{
+		conditions+= " and userid ='"+v+"'"
+	}else{
+		conditions+= " and userid ='"+this.Userid+"'"
 	}
-	Nickname := this.GetString("nickname")
-	if Nickname != ""{
-		conditions+= " and nickname ="+Nickname
+	if v := this.GetString("nickname");v != ""{
+		conditions+= " and nickname ="+v
 	}
-	Telphone := this.GetString("telphone")
-	if Telphone !="" {
-		conditions+= " and telphone = "+Telphone
+	if v := this.GetString("telphone");v !="" {
+		conditions+= " and telphone = "+v
+	}
+	if v:= this.GetString("openid");v !="" {
+		conditions+= " and openid = "+v
 	}
 	if len(conditions) == 0{
-		common.ErrSystem.Message = "不存在条件"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false,"不存在条件","")
 	}
+	var user  models.Users
 	sql := "select * from lb_users where true "+conditions
-	res :=comm.RawSeter(sql)
+	res := comm.RawSeter(sql)
 	err := res.QueryRow(&user)
 	if err == nil {
-		common.Actionsuccess.MoreInfo = &user
-		this.renderJson(common.Actionsuccess)
+		this.Rsp(true,"成功!",&user)
 	}
-	common.ErrSystem.Message = "不存在当前用户"
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false,"不存在当前用户","")
 }
-
-// @Title 添加用户
-// @Summary  添加用户
-// @Description 添加用户
-// @Success 200  {<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname": "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl": "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号", <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address": "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   nickname  formData   string  true      "昵称"
-// @Param   openid    formData   string  false     "openid"
-// @Param   wnickname  formData   string  false    "微信昵称"
-// @Param   wimgurl    formData   string  false     "微信头像"
-// @Param   mgurl       formData   string  false    "头像"
-// @Param   gender      formData   int  false    "性别1:男2:女3:保密"
-// @Param   age         formData   int  false    "年龄"
-// @Param   telphone    formData   int  false    "手机号"
-// @Param   qq          formData   string  false    "QQ"
-// @Param   weino       formData   string  false    "微博"
-// @Param   signature   formData   string  false    "个性签名"
-// @Failure 100 错误提示信息!
-// @Failure 500 服务器错误!
-// @router /useradd [post]
-func (this *UsersController) Useradd() {
-	user := models.Users{}
-	id := models.GetID()
-	user.Userid   =  fmt.Sprintf("%d", id)
-	user.Nickname = this.GetString("nickname")
-	user.Openid  = this.GetString("openid")
-	user.Wnickname = this.GetString("wnickname")
-	user.Wimgurl = this.GetString("wimgurl")
-	user.Imgurl = this.GetString("imgurl")
-	var Gender,_ = this.GetInt64("gender")
-	if Gender != 0{
-		user.Gender = Gender
-	}
-	var Age ,_ = this.GetInt32("age")
-	if Age != 0{
-		user.Age = Age
-	}
-	var Telphone = this.GetString("telphone")
-	if Telphone != ""{
-		user.Telphone = Telphone
-	}
-	user.Qq  = this.GetString("qq")
-	user.Weino = this.GetString("weino")
-	user.Signature = this.GetString("signature")
-	user.Address = this.GetString("address")
-	user.Created_at =  time.Now().Unix()
-	user.Updated_at = 0
-	err := user.InsertValidation()
-	if err != nil {
-		common.ErrSystem.Message = fmt.Sprint(err)
-		this.renderJson(common.ErrSystem)
-	}
-	err = comm.Insert(&user)
-	if err != nil {
-		common.ErrSystem.Message = fmt.Sprint(err)
-		this.renderJson(common.ErrSystem)
-	}
-	common.Actionsuccess.MoreInfo = &user
-	this.renderJson(common.Actionsuccess)
-}
-
-
 // @Title 修改用户
 // @Description 修改用户
 // @Summary  修改用户
 // @Success 200  {<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname": "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl": "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号", <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address": "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   userid      formData   int  true  "用户编号"
-// @Param   nickname    formData   string  false    "昵称"
-// @Param   openid      formData   string  false    "openid"
-// @Param   wnickname   formData   string  false    "微信昵称"
-// @Param   wimgurl     formData   string  false    "微信头像"
-// @Param   mgurl       formData   string  false   "头像"
+// @Param   token       header     string  true  "token"
+// @Param   userid      formData   string  true  "用户编号"
+// @Param   nickname    formData   string  false  "昵称"
+// @Param   openid      formData   string  false  "openid"
+// @Param   wnickname   formData   string  false  "微信昵称"
+// @Param   wimgurl     formData   string  false  "微信头像"
+// @Param   mgurl       formData   string  false  "头像"
 // @Param   gender      formData   int  false     "性别1:男2:女3:保密"
 // @Param   age         formData   int  false     "年龄"
-// @Param   telphone    formData   string  false     "手机号"
+// @Param   telphone    formData   string  false  "手机号"
+// @Param   password    formData   string  false  "密码"
 // @Param   qq          formData   string  false  "QQ"
 // @Param   weino       formData   string  false  "微博"
 // @Param   signature   formData   string  false  "个性签名"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
-// @router /userupdate [post]
-func (this *UsersController) Userupdate(){
+// @router /updateuser [post]
+func (this *UsersController) Updateuser(){
 	user := models.Users{}
 	user.Userid = this.GetString("userid")
 	err := user.UserValidation()
 	if err != nil {
-		common.ErrSystem.Message =  fmt.Sprint(err)
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false,err.Error(),"")
 	}
 	if err := comm.Read(&user);err == nil {
-		Nickname := this.GetString("nickname")
-		if Nickname != ""{
-			user.Nickname = Nickname
+		if v:=this.GetString("nickname");v!=""{
+			user.Nickname = v
 		}
-		Openid := this.GetString("openid")
-		if Openid != ""{
-			user.Openid = Openid
+		if v:=this.GetString("openid");v!=""{
+			user.Openid = v
 		}
-		Wnickname := this.GetString("wnickname")
-		if Wnickname != ""{
-			user.Wnickname = Wnickname
+		if v:=this.GetString("wnickname");v!=""{
+			user.Wnickname = v
 		}
-		Wimgurl := this.GetString("wimgurl")
-		if Wimgurl != ""{
-			user.Wimgurl = Wimgurl
+		if v:=this.GetString("wimgurl");v!=""{
+			user.Wimgurl = v
 		}
-		Imgurl := this.GetString("imgurl")
-		if Imgurl != ""{
-			user.Imgurl = Imgurl
+		if v:=this.GetString("password");v!=""{
+			user.Password = models.Md5([]byte(v))
 		}
-		var Gender,_ = this.GetInt64("gender")
-		if Gender != 0{
-			user.Gender = Gender
+		if v := this.GetString("imgurl");v!= ""{
+			user.Imgurl = v
 		}
-		var Age ,_ = this.GetInt32("age")
-		if Age != 0{
-			user.Age = Age
+		if v,_ := this.GetInt64("gender");v!= 0{
+			user.Gender = v
 		}
-		var telphone  = this.GetString("telphone")
-		if telphone != ""{
-			user.Telphone = telphone
+		if v ,_ := this.GetInt32("age");v!= 0{
+			user.Age = v
 		}
-		Qq := this.GetString("qq")
-		if Qq != ""{
-			user.Qq = Qq
+		if v := this.GetString("telphone");v!= ""{
+			user.Telphone = v
 		}
-		Weino := this.GetString("weino")
-		if Weino != ""{
-			user.Weino = Weino
+		if v := this.GetString("qq");v != ""{
+			user.Qq = v
 		}
-		Signature := this.GetString("signature")
-		if Signature != ""{
-			user.Signature = Signature
+		if v := this.GetString("weino");v!= ""{
+			user.Weino = v
 		}
-		Address := this.GetString("address")
-		if Address != ""{
-			user.Address = Address
+		if v := this.GetString("signature");v!= ""{
+			user.Signature = v
+		}
+		if v := this.GetString("address");v!= ""{
+			user.Address = v
 		}
 		user.Updated_at = time.Now().Unix()
 		if update:= comm.Update(&user);update ==nil{
-			common.Actionsuccess.MoreInfo = &user
-			this.renderJson(common.Actionsuccess)
+			this.Rsp(true,"成功",&user)
+		}else{
+			this.Rsp(false,"失败","")
 		}
-	}else{
-		common.ErrSystem.Message = "没有当前记录"
 	}
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false,"没有当前记录","")
 }
 
 
 // 根据openid获取地理位置
-// @Title  根据openid获取地理位置
-// @Summary   根据openid获取地理位置
-// @Description 根据openid获取地理位置
-// @Param	openid	formData  string	true  "openid"
-// @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
-// @Failure 403 :openid is empty
-// @router /getlocaltionbyid [post]
+// Title  根据openid获取地理位置
+// Summary   根据openid获取地理位置
+// Description 根据openid获取地理位置
+// @Param   token       header     string  true  "token"
+// Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
+// Failure 403 :openid is empty
+// router /getlocaltionbyid [post]
 func (this *UsersController) GetLocaltionByID() {
-	Openid := this.GetString("openid")
+	Openid := this.Openid
 	if Openid == "" {
-		common.ErrSystem.Message =  "openid不能为空!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false,"openid不能为空!","")
 	}
 	l,_ := models.GetLocationByID(Openid)
 	l["openid"] = Openid
-	this.Data["json"] = l
-	this.ServeJSON()
+	this.Rsp(true,"成功",& l)
 }
-
-
-// 根据openid获取附近的人
-// @Title  根据openid获取附近的人
-// @Summary   根据openid获取附近的人
-// @Description 根据openid获取附近的人
-// @Param	openid	formData  string	true  "openid"
+// @Title  获取附近的人
+// @Summary   获取附近的人
+// @Description 获取附近的人
+// @Param   token       header     string  true  "token"
 // @Param	radius	formData  string	true  "方圆多少米范围内"
 // @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
 // @Failure 403 :openid is empty
 // @router /getusersbylocaltion [post]
 func (this *UsersController) GetUsersByLocaltion() {
-	Openid := this.GetString("openid")
+	Openid := this.Openid
 	Radius,_:= this.GetInt64("radius",1000)
 	if Openid == "" {
-		common.ErrSystem.Message =  "提交参数错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false,"提交参数错误!","")
 	}
-	re,err := models.GetUsersByLocaltion(Openid,Radius)
-	fmt.Println(err)
-	this.Data["json"] =  re
-	this.ServeJSON()
+	var re  []map[string]string
+	openid := []string{Openid}
+	u,err:=models.GetUsersByOpenId(openid)
+	if err == nil{
+		geokey :=u.Province+"-"+u.City
+		re,_= models.GetUsersByLocaltion(Openid,geokey,Radius)
+	}
+	this.Rsp(true,"成功!",&re)
 }
 
 
@@ -249,22 +197,22 @@ func (this *UsersController) GetUsersByLocaltion() {
 // @Title  用户上传地理位置
 // @Summary   用户上传地理位置
 // @Description 用户上传地理位置
-// @Param	openid	formData  string	true  "openid"
+// @Param   token       header     string  true  "token"
 // @Param	lang	formData  string	true  "纬度"
 // @Param	lat  	formData  string	true  "经度"
 // @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
 // @Failure 403 :openid is empty
 // @router /addlocaltionbyid [post]
 func (this *UsersController) AddLocaltionByID() {
-	Openid := this.GetString("openid")
+	Openid := this.Openid
 	Lang,_ := this.GetFloat("lang")
 	Lat,_ := this.GetFloat("lat")
 	if Openid == "" || Lang== 0 || Lat== 0{
-		common.ErrSystem.Message =  "提交参数错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false,"提交参数错误!","")
 	}
 	err:= models.AddLocationByID(Openid,Lang,Lat)
-	fmt.Println(err)
-	this.Data["json"] = Openid
-	this.ServeJSON()
+	if err == nil{
+		this.Rsp(true,"成功!",&Openid)
+	}
+	this.Rsp(false,"失败!","")
 }

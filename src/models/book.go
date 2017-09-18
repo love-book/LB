@@ -1,6 +1,7 @@
 package models
 
 import(
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_"common/conndatabase"
 	"strconv"
@@ -22,14 +23,14 @@ type Books struct {
 	State        uint8	`json:"state" valid:"Required;Range(0, 1)"`
 }
 
-func init()  {
-	orm.RegisterModelWithPrefix("lb_",new(Books))
+func (b *Books) TableName() string {
+	return beego.AppConfig.String("table_books")
 }
 
-func (this *Books) GetBookinfo (bookid int64) Books  {
-
-	return *this
+func init() {
+	orm.RegisterModel(new(Books))
 }
+
 
 //获取图书列表
 func  GetBookList(start int,length int,conditions string) (books []*Books){
@@ -67,4 +68,23 @@ func UpdateBookById(m *Books) (err error) {
 		fmt.Println("Number of records updated in database:", num)
 	}
 	return
+}
+
+
+//获取图书
+func  GetBookInfo(conditions string) (book *Books,err error){
+	var  rowsSql  = "select *  from  lb_books where true "+conditions+"  order by bookid desc  limit 1"
+	o := orm.NewOrm()
+	err = o.Raw(rowsSql).QueryRow(&book)
+	return  book,err
+}
+
+//获取收藏列表
+func  GetConcernList(start int,length int,conditions string) (concerns []*Concern,totalItem int){
+	var  countSql = "select count(*) from  lb_concern  where true "+conditions
+	var  rowsSql  = "select *  from  lb_concern where true "+conditions+"  order by created_at desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(countSql).QueryRow(&totalItem) //获取总条数
+	o.Raw(rowsSql).QueryRows(&concerns)
+	return  concerns,totalItem
 }

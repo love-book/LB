@@ -2,7 +2,6 @@ package controllers
 
 import (
 	comm "common/conndatabase"
-	"common"
 	"models"
 	"fmt"
 	"time"
@@ -18,6 +17,7 @@ type BookorderController struct {
 // @Summary 订单列表
 // @Description  订单列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
 // @Param   length    formData   string  false      "获取分页步长"
 // @Param   draw      formData   string  false      "当前页"
 // @Param   bookname  formData   string  false   "书名"
@@ -102,8 +102,7 @@ func (this *BookorderController) Orderlist() {
 		}
 		resPonse = append(resPonse,&book)
 	}
-	Json := map[string]interface{}{"draw":draw,"data":resPonse}
-	this.renderJson(Json)
+	this.Rsp(true, "获取成功!",&resPonse)
 }
 
 
@@ -112,8 +111,8 @@ func (this *BookorderController) Orderlist() {
 // @Summary  创建订单
 // @Description 创建订单
 // @Success 200  {<br/>"userid":"用户编号", "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
 // @Param   from   formData   string  true    "书主人用户编号"
-// @Param   to   formData   string  true      "借书人用户编号"
 // @Param   bookqid   formData   string  true  "书主人书架图书唯一编号"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
@@ -121,16 +120,14 @@ func (this *BookorderController) Orderlist() {
 func (this *BookorderController) Orderadd() {
 	bookqid  :=   this.GetString("bookqid")
 	from    :=   this.GetString("from")
-	to      :=   this.GetString("to")
+	to      :=   this.Userid
 	if from =="" || bookqid=="" || to == ""{
-		common.ErrSystem.Message = "参数错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "参数错误!","")
 	}
 	//查询书主人用户书架
 	book,err:= models.GetUserBookRack(from,bookqid)
 	if err != nil {
-		common.ErrSystem.Message = "用户不存在当前图书!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "用户不存在当前图书!","")
 	}
 	//书信息
 	newBook := map[string]interface{}{}
@@ -149,8 +146,7 @@ func (this *BookorderController) Orderadd() {
 	userInfo:= []string{from,to}
 	toUser,uerr := models.GetUsersByIds(userInfo)
 	if uerr != nil {
-		common.ErrSystem.Message = "借书人或书主人信息不存在!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "借书人或书主人信息不存在!","")
 	}
 	UserFrom := map[string]interface{}{}
 	UserTo   := map[string]interface{}{}
@@ -176,18 +172,15 @@ func (this *BookorderController) Orderadd() {
 	}
 	fty,ferr:= json.Marshal(&UserFrom)
 	if ferr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	tty,terr:= json.Marshal(&UserTo)
 	if terr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	res,rerr:= json.Marshal(&newBook)
 	if rerr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	NewsInfo := models.Bookorder{}
 	id := models.GetID()
@@ -204,12 +197,9 @@ func (this *BookorderController) Orderadd() {
 	NewsInfo.Update_time = t
 	toRes :=  comm.Insert(&NewsInfo)
     if toRes == nil {
-		common.Actionsuccess.Message ="订单添加成功!"
-		common.Actionsuccess.MoreInfo = &NewsInfo
-		this.renderJson(common.Actionsuccess)
+		this.Rsp(true, "订单添加成功!",&NewsInfo)
 	}
-	common.ErrSystem.Message = "未知错误!"
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false, "未知错误!","")
 }
 
 
@@ -218,6 +208,7 @@ func (this *BookorderController) Orderadd() {
 // @Summary  更改订单
 // @Description 更改订单
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
 // @Param   orderid   formData   string  true    "订单编号"
 // @Param   order_state   formData   string  true   "消息状态状态1:同意2:拒绝,3:完成，0：借书请求"
 // @Failure 100 错误提示信息!
@@ -226,9 +217,8 @@ func (this *BookorderController) Orderadd() {
 func (this *BookorderController) Orderupdate() {
 	orderid   :=   this.GetString("orderid")
 	order_state  :=   this.GetString("order_state")
-	if   order_state == "" || orderid ==""{
-		common.ErrSystem.Message = "参数错误!"
-		this.renderJson(common.ErrSystem)
+	if order_state == "" || orderid ==""{
+		this.Rsp(false, "参数错误!","")
 	}
 	model := models.Bookorder{}
 	model.Orderid = orderid
@@ -239,11 +229,8 @@ func (this *BookorderController) Orderupdate() {
 		model.Update_time = t
 		err = comm.Update(&model)
 		if err == nil {
-			common.Actionsuccess.Message ="当前订单状态已修改"
-			common.Actionsuccess.MoreInfo = &model
-			this.renderJson(common.Actionsuccess)
+			this.Rsp(true, "当前消息状态已修改!",&model)
 		}
 	}
-	common.ErrSystem.Message = "修改失败!"
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false, "修改失败!","")
 }

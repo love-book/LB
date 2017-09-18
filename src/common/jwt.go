@@ -7,20 +7,19 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	//"github.com/astaxie/beego/logs"
 	//"github.com/astaxie/beego"
-	//"fmt"
+	"fmt"
 )
 
 type Claims struct {
 	Appid string `json:"appid"`
-	// recommended having
 	jwt.StandardClaims
 }
 var (
-	key []byte = []byte ("-jwt_secrt_LB163@why.com")
+	tokenKey []byte = []byte ("-jwt_secrt_LB163@why.com")
 )
 
-func GetToken(appid string) (string,error)  {
-	expireToken := time.Now().Add(time.Hour * 2).Unix()
+func SetToken(appid string) (string,error)  {
+	expireToken := time.Now().Add(time.Hour * 1).Unix()
 	claim := Claims{
 		appid,
 		jwt.StandardClaims{
@@ -30,20 +29,50 @@ func GetToken(appid string) (string,error)  {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,claim)
-	strtoken, err := token.SignedString(key)
-
+	strtoken, err := token.SignedString(tokenKey)
 	return strtoken,err
-
 }
 
-func VerifyToken(token string) bool  {
-	_ , err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
-		return key, nil
+func GetToken(tokenString string)(claims *Claims,ok bool){
+	//return nil,false
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return tokenKey, nil
 	})
+	if err!=nil{
+		return nil,false
+	}
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		fmt.Printf("%v %v", claims.Appid, claims.StandardClaims.ExpiresAt)
+		return claims, ok
+	} else {
+		fmt.Println(err.Error())
+		return nil,false
+	}
+	return nil,false
+}
 
-	if err != nil {
-
+func VerifyToken(tokenString string) bool{
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return tokenKey, nil
+	})
+	if err!= nil{
 		return false
 	}
-	return true
+	if token.Valid {
+		fmt.Println("验证成功")
+		return true
+	} else if ve, ok := err.(*jwt.ValidationError); ok {
+		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+			fmt.Println("That's not even a token")
+		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+			// Token is either expired or not active yet
+			fmt.Println("Timing is everything")
+		} else {
+			fmt.Println("Couldn't handle this token:", err)
+		}
+	} else {
+		fmt.Println("Couldn't handle this token:", err)
+	}
+	return false
 }
+

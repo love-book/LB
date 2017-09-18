@@ -7,6 +7,145 @@ info:
     email: 773683464@qq.com
 basePath: /v1
 paths:
+  /app/accesstoken:
+    post:
+      tags:
+      - app
+      summary: openid获取token
+      description: openid获取token
+      operationId: AppController.openid获取token
+      parameters:
+      - in: formData
+        name: openid
+        description: openid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{<br/> token}'
+        "403":
+          description: :openid is empty
+  /app/login:
+    post:
+      tags:
+      - app
+      summary: 用户登录获取token
+      description: 用户登录获取token
+      operationId: AppController.用户登录获取token
+      parameters:
+      - in: formData
+        name: telphone
+        description: 手机号
+        required: true
+        type: string
+      - in: formData
+        name: password
+        description: 密码
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{<br/> "telphone": "手机号",<br/>"password": "密码",<br/>}'
+        "403":
+          description: :openid is empty
+  /app/useradd:
+    post:
+      tags:
+      - app
+      summary: 添加用户
+      description: 添加用户
+      operationId: AppController.添加用户
+      parameters:
+      - in: formData
+        name: nickname
+        description: 昵称
+        required: true
+        type: string
+      - in: formData
+        name: openid
+        description: openid
+        type: string
+      - in: formData
+        name: wnickname
+        description: 微信昵称
+        type: string
+      - in: formData
+        name: wimgurl
+        description: 微信头像
+        type: string
+      - in: formData
+        name: mgurl
+        description: 头像
+        type: string
+      - in: formData
+        name: gender
+        description: 性别1:男2:女3:保密
+        type: integer
+        format: int64
+      - in: formData
+        name: age
+        description: 年龄
+        type: integer
+        format: int64
+      - in: formData
+        name: telphone
+        description: 手机号
+        type: integer
+        format: int64
+      - in: formData
+        name: qq
+        description: QQ
+        type: string
+      - in: formData
+        name: weino
+        description: 微博
+        type: string
+      - in: formData
+        name: signature
+        description: 个性签名
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
+            "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":
+            "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号",
+            <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address":
+            "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
+        "500":
+          description: 服务器错误!
+  /book/addconcern:
+    post:
+      tags:
+      - book
+      summary: 收藏人/书籍
+      description: 收藏人/书籍
+      operationId: BooksController.收藏人/书籍
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: userid_from
+        description: 书主人编号/图书编号bookid
+        required: true
+        type: string
+      - in: formData
+        name: concern_type
+        description: 1:收藏书籍;2:收藏人
+        required: true
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/>
+            "concern_type": "1:收藏书籍;2:收藏人",<br/> "created_at": "收藏时间" }'
+        "500":
+          description: 服务器错误!
   /book/bookadd:
     post:
       tags:
@@ -15,6 +154,11 @@ paths:
       description: 添加书籍
       operationId: BooksController.添加书籍
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
         name: bookname
         description: 书名
@@ -64,37 +208,19 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /book/bookaddbycode:
+  /book/concernbooklist:
     post:
       tags:
       - book
-      summary: 条形码添加书籍
-      description: 条形码添加书籍
-      operationId: BooksController.条形码添加书籍
+      summary: 收藏的图书列表
+      description: 收藏的图书列表
+      operationId: BooksController.收藏的图书列表
       parameters:
-      - in: formData
-        name: isbn
-        description: 条形码
+      - in: header
+        name: token
+        description: token
+        required: true
         type: string
-      responses:
-        "100":
-          description: 错误提示信息!
-        "200":
-          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
-            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
-            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
-            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
-            }'
-        "500":
-          description: 服务器错误!
-  /book/booklist:
-    post:
-      tags:
-      - book
-      summary: 获取图书列表
-      description: 获取图书列表
-      operationId: BooksController.获取图书列表
-      parameters:
       - in: formData
         name: length
         description: 分页步长
@@ -105,26 +231,6 @@ paths:
         description: 请求页数
         type: integer
         format: int64
-      - in: formData
-        name: bookname
-        description: 书名
-        type: string
-      - in: formData
-        name: author
-        description: 作者
-        type: string
-      - in: formData
-        name: bookid
-        description: 图书编号
-        type: string
-      - in: formData
-        name: isbn
-        description: 图书条形码
-        type: string
-      - in: formData
-        name: state
-        description: 状态1:上架;2:下架;3:待补充
-        type: string
       responses:
         "200":
           description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
@@ -134,58 +240,30 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /book/bookupdate:
+  /book/concernuserlist:
     post:
       tags:
       - book
-      summary: 修改书籍
-      description: 修改书籍
-      operationId: BooksController.修改书籍
+      summary: 收藏的用户列表
+      description: 收藏的图书列表
+      operationId: BooksController.收藏的用户列表
       parameters:
-      - in: formData
-        name: bookid
-        description: 图书编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
-        name: bookname
-        description: 书名
-        type: string
+        name: length
+        description: 分页步长
+        type: integer
+        format: int64
       - in: formData
-        name: author
-        description: 作者
-        type: string
-      - in: formData
-        name: imageurl
-        description: 图书封面图
-        type: string
-      - in: formData
-        name: imagehead
-        description: 图书正面图
-        type: string
-      - in: formData
-        name: imageback
-        description: 图书背面图
-        type: string
-      - in: formData
-        name: isbn
-        description: 条形码
-        type: string
-      - in: formData
-        name: describe
-        description: 图书简介
-        type: string
-      - in: formData
-        name: price
-        description: 标价
-        type: string
-      - in: formData
-        name: state
-        description: 状态1:上架;2:下架;3:待补充
-        type: string
+        name: draw
+        description: 请求页数
+        type: integer
+        format: int64
       responses:
-        "100":
-          description: 错误提示信息!
         "200":
           description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
             "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
@@ -194,24 +272,32 @@ paths:
             }'
         "500":
           description: 服务器错误!
-  /book/uploadfile:
+  /book/delbookconcern:
     post:
       tags:
       - book
-      summary: 上传文件
-      description: 上传文件
-      operationId: BooksController.上传文件
+      summary: 批量删除收藏
+      description: 批量删除收藏
+      operationId: BooksController.批量删除收藏
       parameters:
-      - in: formData
-        name: fname
-        description: 文件
+      - in: header
+        name: token
+        description: token
         required: true
-        type: file
+        type: string
+      - in: formData
+        name: concernid
+        description: '[编号1,编号2,编号3]'
+        required: true
+        type: string
       responses:
         "100":
           description: 错误提示信息!
         "200":
-          description: '{<br/>  "url": "url" <br/> }'
+          description: '{ <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid":
+            "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow":
+            "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/>
+            }'
         "500":
           description: 服务器错误!
   /booknews/libraryrequest:
@@ -222,14 +308,14 @@ paths:
       description: 发起借书请求
       operationId: BooknewsController.发起借书请求
       parameters:
-      - in: formData
-        name: from
-        description: 书主人用户编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
-        name: to
-        description: 借书人用户编号
+        name: from
+        description: 书主人用户编号
         required: true
         type: string
       - in: formData
@@ -256,6 +342,11 @@ paths:
       description: 更改借书消息状态
       operationId: BooknewsController.更改借书请求状态
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
         name: newid
         description: 消息编号
@@ -285,6 +376,11 @@ paths:
       description: 借书消息列表
       operationId: BooknewsController.借书消息列表
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
         name: length
         description: 分页步长
@@ -292,11 +388,6 @@ paths:
       - in: formData
         name: draw
         description: 当前页
-        type: string
-      - in: formData
-        name: userid
-        description: 用户编号
-        required: true
         type: string
       - in: formData
         name: bookqid
@@ -327,6 +418,11 @@ paths:
       description: 订单列表
       operationId: BookorderController.订单列表
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
         name: length
         description: 获取分页步长
@@ -388,14 +484,14 @@ paths:
       description: 创建订单
       operationId: BookorderController.创建订单
       parameters:
-      - in: formData
-        name: from
-        description: 书主人用户编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
-        name: to
-        description: 借书人用户编号
+        name: from
+        description: 书主人用户编号
         required: true
         type: string
       - in: formData
@@ -422,6 +518,11 @@ paths:
       description: 更改订单
       operationId: BookorderController.更改订单
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
         name: orderid
         description: 订单编号
@@ -451,9 +552,9 @@ paths:
       description: 添加到书架
       operationId: BooksrackController.添加到书架
       parameters:
-      - in: formData
-        name: userid
-        description: 用户编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
@@ -478,9 +579,9 @@ paths:
       description: 扫条码添加到书架
       operationId: BooksrackController.扫条码添加到书架
       parameters:
-      - in: formData
-        name: userid
-        description: 用户编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
@@ -501,9 +602,9 @@ paths:
     post:
       tags:
       - bookrack
-      summary: 用户获取书架图书列表
-      description: 用户获取书架图书列表
-      operationId: BooksrackController.用户获取书城图书列表
+      summary: 书城
+      description: 书城
+      operationId: BooksrackController.书城
       parameters:
       - in: formData
         name: length
@@ -514,66 +615,78 @@ paths:
         description: 当前页
         type: string
       - in: formData
-        name: bookname
-        description: 书名
-        type: string
-      - in: formData
-        name: author
-        description: 作者
-        type: string
-      - in: formData
-        name: bookid
-        description: 图书编号
-        type: string
-      - in: formData
-        name: bookqid
-        description: 图书唯一码
-        type: string
-      - in: formData
-        name: isbn
-        description: 图书条形码
-        type: string
-      - in: formData
-        name: userid
-        description: 用户编号
-        type: string
-      - in: formData
-        name: book_state
-        description: 图书状态
-        type: string
-      - in: formData
         name: gender
         description: 性别
         type: string
       - in: formData
         name: age
-        description: 年龄
+        description: 年龄范围
+        type: string
+      - in: formData
+        name: radius
+        description: 方圆多少米范围内
         type: string
       responses:
         "200":
-          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
-            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
-            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
-            <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
-            }'
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid":
+            "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state":
+            "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"wnickname":
+            "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender":
+            "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password":
+            "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
+            "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
+            "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
+            "距离"'
         "500":
           description: 服务器错误!
   /bookrack/bookrackupdate:
     post:
       tags:
       - bookrack
-      summary: 用户更改书架图书状态
-      description: 用户更改书架图书状态
-      operationId: BooksrackController.用户更改书架图书状态
+      summary: 批量上架/下架/删除图书
+      description: 批量上架/下架/删除图书
+      operationId: BooksrackController.批量上架/下架/删除图书
       parameters:
-      - in: formData
-        name: bookqid
-        description: 图书唯一编号
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
-        name: bookstate
-        description: 书架图书状态1:上架;2:下架;3:待补充
+        name: bookinfo
+        description: '[{bookqid:图书唯一编号,book_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除}]'
+        required: true
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{ <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid":
+            "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow":
+            "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /bookrack/getbookbysn:
+    post:
+      tags:
+      - bookrack
+      summary: 扫条码获取图书
+      description: 扫条码获取图书
+      operationId: BooksrackController.扫条码获取图书
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: isbn
+        description: 图书条码
         required: true
         type: string
       responses:
@@ -585,6 +698,168 @@ paths:
             "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
+  /bookrack/getbookinfo:
+    post:
+      tags:
+      - bookrack
+      summary: 查看一本书信息
+      description: 查看一本书信息
+      operationId: BooksrackController.查看一本书信息
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: bookqid
+        description: 图书唯一编号
+        required: true
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid":
+            "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state":
+            "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"wnickname":
+            "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender":
+            "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password":
+            "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
+            "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
+            "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
+            "距离"'
+        "500":
+          description: 服务器错误!
+  /bookrack/getbookusers:
+    post:
+      tags:
+      - bookrack
+      summary: 拥有此书的人
+      description: 拥有此书的人
+      operationId: BooksrackController.拥有此书的人
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: length
+        description: 获取分页步长
+        type: string
+      - in: formData
+        name: draw
+        description: 当前页
+        type: string
+      - in: formData
+        name: bookid
+        description: 书编号
+        required: true
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid":
+            "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state":
+            "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"wnickname":
+            "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender":
+            "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password":
+            "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
+            "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
+            "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
+            "距离"'
+        "500":
+          description: 服务器错误!
+  /bookrack/getmybooklist:
+    post:
+      tags:
+      - bookrack
+      summary: 上架记录
+      description: 上架记录
+      operationId: BooksrackController.上架记录
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: length
+        description: 获取分页步长
+        type: string
+      - in: formData
+        name: draw
+        description: 当前页
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid":
+            "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state":
+            "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"wnickname":
+            "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender":
+            "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password":
+            "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
+            "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
+            "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
+            "距离"'
+        "500":
+          description: 服务器错误!
+  /bookrack/mybookrack:
+    post:
+      tags:
+      - bookrack
+      summary: 我的书架
+      description: 我的书架
+      operationId: BooksrackController.我的书架
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: length
+        description: 获取分页步长
+        type: string
+      - in: formData
+        name: draw
+        description: 当前页
+        type: string
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid":
+            "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state":
+            "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"wnickname":
+            "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender":
+            "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password":
+            "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
+            "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
+            "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
+            "距离"'
+        "500":
+          description: 服务器错误!
   /users/addlocaltionbyid:
     post:
       tags:
@@ -593,9 +868,9 @@ paths:
       description: 用户上传地理位置
       operationId: UsersController.用户上传地理位置
       parameters:
-      - in: formData
-        name: openid
-        description: openid
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
@@ -613,35 +888,17 @@ paths:
           description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
         "403":
           description: :openid is empty
-  /users/getlocaltionbyid:
-    post:
-      tags:
-      - users
-      summary: 根据openid获取地理位置
-      description: 根据openid获取地理位置
-      operationId: UsersController.根据openid获取地理位置
-      parameters:
-      - in: formData
-        name: openid
-        description: openid
-        required: true
-        type: string
-      responses:
-        "200":
-          description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
-        "403":
-          description: :openid is empty
   /users/getusersbylocaltion:
     post:
       tags:
       - users
-      summary: 根据openid获取附近的人
-      description: 根据openid获取附近的人
-      operationId: UsersController.根据openid获取附近的人
+      summary: 获取附近的人
+      description: 获取附近的人
+      operationId: UsersController.获取附近的人
       parameters:
-      - in: formData
-        name: openid
-        description: openid
+      - in: header
+        name: token
+        description: token
         required: true
         type: string
       - in: formData
@@ -654,18 +911,27 @@ paths:
           description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
         "403":
           description: :openid is empty
-  /users/useradd:
+  /users/updateuser:
     post:
       tags:
       - users
-      summary: 添加用户
-      description: 添加用户
-      operationId: UsersController.添加用户
+      summary: 修改用户
+      description: 修改用户
+      operationId: UsersController.修改用户
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: formData
+        name: userid
+        description: 用户编号
+        required: true
+        type: string
       - in: formData
         name: nickname
         description: 昵称
-        required: true
         type: string
       - in: formData
         name: openid
@@ -696,8 +962,11 @@ paths:
       - in: formData
         name: telphone
         description: 手机号
-        type: integer
-        format: int64
+        type: string
+      - in: formData
+        name: password
+        description: 密码
+        type: string
       - in: formData
         name: qq
         description: QQ
@@ -719,6 +988,26 @@ paths:
             "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号",
             <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address":
             "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
+        "500":
+          description: 服务器错误!
+  /users/uploadfile:
+    post:
+      tags:
+      - users
+      summary: 上传文件
+      description: 上传文件
+      operationId: UsersController.上传文件
+      parameters:
+      - in: formData
+        name: fname
+        description: 文件
+        required: true
+        type: file
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>  "url": "url" <br/> }'
         "500":
           description: 服务器错误!
   /users/userinfo:
@@ -729,90 +1018,24 @@ paths:
       description: 获取用户信息
       operationId: UsersController.获取用户信息
       parameters:
-      - in: formData
-        name: userid
-        description: 用户编号
-        type: string
-      - in: formData
-        name: nickname
-        description: 昵称
-        type: string
-      - in: formData
-        name: telphone
-        description: 手机号
-        type: string
-      responses:
-        "200":
-          description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
-            "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":
-            "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号",
-            <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address":
-            "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
-        "500":
-          description: 服务器错误!
-  /users/userupdate:
-    post:
-      tags:
-      - users
-      summary: 修改用户
-      description: 修改用户
-      operationId: UsersController.修改用户
-      parameters:
-      - in: formData
-        name: userid
-        description: 用户编号
+      - in: header
+        name: token
+        description: token
         required: true
-        type: integer
-        format: int64
+        type: string
+      - in: formData
+        name: userid
+        description: 用户编号
+        type: string
       - in: formData
         name: nickname
         description: 昵称
         type: string
       - in: formData
-        name: openid
-        description: openid
-        type: string
-      - in: formData
-        name: wnickname
-        description: 微信昵称
-        type: string
-      - in: formData
-        name: wimgurl
-        description: 微信头像
-        type: string
-      - in: formData
-        name: mgurl
-        description: 头像
-        type: string
-      - in: formData
-        name: gender
-        description: 性别1:男2:女3:保密
-        type: integer
-        format: int64
-      - in: formData
-        name: age
-        description: 年龄
-        type: integer
-        format: int64
-      - in: formData
         name: telphone
         description: 手机号
         type: string
-      - in: formData
-        name: qq
-        description: QQ
-        type: string
-      - in: formData
-        name: weino
-        description: 微博
-        type: string
-      - in: formData
-        name: signature
-        description: 个性签名
-        type: string
       responses:
-        "100":
-          description: 错误提示信息!
         "200":
           description: '{<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname":
             "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl":
@@ -825,3 +1048,6 @@ tags:
 - name: users
   description: |
     User API
+- name: app
+  description: |
+    App API

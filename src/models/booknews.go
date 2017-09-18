@@ -11,7 +11,7 @@ type Booknews struct {
 	Userid_from	string	`json:"userid_from" valid:"Required"`
 	Userid_to	string	`json:"userid_to" valid:"Required"`
 	Bookqid	    string	`json:"bookqid" valid:"Required"`
-	Books       string  `json:"books"  valid:"Required"`
+	Books       string  `json:"books"   valid:"Required"`
 	User_from   string	`json:"user_from" valid:"Required"`
 	User_to     string	`json:"user_to"`
 	Order_type  uint8   `json:"order_state" valid:"Required;Range(1,2)"`

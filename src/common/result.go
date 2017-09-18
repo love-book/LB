@@ -39,3 +39,4 @@ func To_md5(encode string) (decode string) {
 func base64Encode(src []byte) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(src))
 }
+

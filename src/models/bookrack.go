@@ -10,34 +10,80 @@ type Bookrack struct {
 	Bookqid      string  `json:"bookqid" valid:"Required" orm:"pk;size(20);column(bookqid);"`
 	Userid       string  `json:"userid" valid:"Required"`
 	Bookid       string  `json:"bookid" valid:"Required"`
-	Book_state   string  `json:"bookstate"`
+	Book_state   string  `json:"book_state"`
 	Is_borrow    string  `json:"is_borrow"`
 	Create_time  int64   `json:"create_time"`
 	Update_time  int64   `json:"update_time"`
 }
 
 
+type BookrackList struct {
+	Bookqid      string  `json:"bookqid" orm:"pk;size(20);column(bookqid);"`
+	Userid       string  `json:"userid"`
+	Openid       string  `json:"openid"`
+	Bookid       string  `json:"bookid"`
+	Book_state   string  `json:"book_state"`
+	Is_borrow    string  `json:"is_borrow"`
+	Create_time  int64   `json:"create_time"`
+	Update_time  int64   `json:"update_time"`
+	Bookname     string  `json:"bookname"`
+	Author       string	 `json:"auhtor""`
+	Imageurl     string	 `json:"imageurl"`
+	Imagehead    string	 `json:"imagehead"`
+	Imageback    string	 `json:"imageback"`
+	Isbn         string	 `json:"isbn"`
+	Depreciation uint8	 `json:"depreciation"`
+	Price        uint16	 `json:"price"`
+	Describe     string	 `json:"describe"`
+	State        uint8	 `json:"state" `
+	Users
+	Radius     	 string	 `json:"radius"`
+}
+
+
+type BookExist struct {
+	Userid       string   `json:"userid"`
+	Bookid       string   `json:"bookid"`
+}
+
+
+type BookState struct {
+	Bookqid       string   `json:"bookqid"`
+	Book_state     string   `json:"book_state"`
+}
+
+
 func init()  {
-	orm.RegisterModelWithPrefix("lb_",new(Bookrack))
+	orm.RegisterModel(new(Bookrack))
+}
+
+func (b *Bookrack) TableName() string {
+	return "lb_bookrack"
 }
 
 
 func  BooksrackList(start int,length int,conditions string) (books []*BookrackList){
-    var  rowsSql  = "select r.*,b.*,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+    var  rowsSql  = "select r.*,b.*,u.openid,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()
 	o.Raw(rowsSql).QueryRows(&books)
 	return  books
 }
 
-func  BooksrackListBack(start int,length int,conditions string) (books []*BookrackList,totalItem int){
-	var  countSql = "select count(*) from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions
-	var  rowsSql  = "select r.*,b.*,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+func  MyBooksrackList(start int,length int,conditions string) (books []*BookrackList,totalItem int){
+	var  countSql = "select count(*) from  lb_bookrack as r inner join lb_books  as b on r.bookid = b.bookid  inner join lb_users as u on u.userid = r.userid  where true "+conditions
+	var  rowsSql  = "select r.*,b.*,u.* from  lb_bookrack as r inner  join lb_books  as b on r.bookid = b.bookid  inner  join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()
 	o.Raw(countSql).QueryRow(&totalItem) //获取总条数
 	o.Raw(rowsSql).QueryRows(&books)
 	return  books,totalItem
 }
 
+func  MyBooksrackInfo(conditions string) (book *BookrackList){
+	var  rowsSql  = "select r.*,b.*,u.* from  lb_bookrack as r inner  join lb_books  as b on r.bookid = b.bookid  inner  join lb_users as u on u.userid = r.userid  where true "+conditions+"  limit 1"
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRow(&book)
+	return  book
+}
 
 //根据id查询
 func GetBookById(bookqid string) (v *Bookrack, err error) {
@@ -60,9 +106,9 @@ func GetUserBookRack(uid string,bookqid string)(b *BookrackList,err error){
 	return nil,err
 }
 //根据用户id和书本id查询
-func GetBookByUidAndBookId(uid string,bookid string)(b *BookrackList,err error){
+func GetBookByUidAndBookId(uid string,bookid string)(b *Bookrack,err error){
 	query:= []string{uid,bookid}
-	sql:= "select userid,bookid from lb_bookrack where userid=? and bookid=?"
+	sql:= "select * from lb_bookrack where userid=? and bookid=?"
 	RawSeter:=orm.NewOrm().Raw(sql,query)
 	if err = RawSeter.QueryRow(&b);err==nil{
 		return b,nil
@@ -79,3 +125,4 @@ func UpdateBookRackById(m *Bookrack) (err error) {
 	}
 	return
 }
+

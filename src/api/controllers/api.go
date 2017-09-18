@@ -13,9 +13,13 @@ import (
 	"time"
 	"strconv"
 	"github.com/garyburd/redigo/redis"
+	"net/http"
+	"encoding/base64"
 )
 
 type ApiController struct {
+	Userid string
+	Openid string
 	beego.Controller
 }
 
@@ -23,13 +27,27 @@ func (this *ApiController) Prepare() {
 	//关闭xsrf校验
 	this.EnableXSRF = false
 	this.EnableRender =false
+	this.SetUserId()
+}
+
+func (this *ApiController) SetUserId() {
+	auth := this.Ctx.Request.Header.Get("token")
+	if u,ok:=common.GetToken(auth);ok{
+		split :=strings.Split(u.Appid,"-")
+		this.Userid = split[0]
+		this.Openid = split[1]
+		fmt.Println(split)
+	}else{
+		this.Userid = ""
+		this.Openid = ""
+	}
 }
 
 //提交数据重复校验
 func  repeatCommit(m interface{}) (err error){
-	byte,_:= json.Marshal(m)
+	bt,_:= json.Marshal(m)
 	hash := md5.New()
-	hash.Write(byte)
+	hash.Write(bt)
 	md5 := fmt.Sprintf("%x", hash.Sum(nil))
 	// 从池里获取连接
 	rc := comm.Pool.Get()
@@ -45,13 +63,14 @@ func  repeatCommit(m interface{}) (err error){
 	}
 	return
 }
-//json输出
-func (this *ApiController) renderJson(Json interface{}) {
-	//Json := map[string]interface{}{"code":0,"msg": "成功!","data":"1111"}
-	this.Data["json"] = Json
+
+
+func (this *ApiController) Rsp(status bool, msg string,data interface{}) {
+	this.Data["json"] = &map[string]interface{}{"status": status, "msg": msg,"data":data}
 	this.ServeJSON()
 	this.StopRun()
 }
+
 
 func (this *ApiController) Index() {
 	token  :=  beego.AppConfig.String("token") // 微信公众平台的Token
@@ -81,25 +100,30 @@ func (this *ApiController) Index() {
 		// 地理位置事件
 		fmt.Println("Event:", mp.Request.Event)
 		if mp.Request.Event == wechat.EventLocation {
-			//设置15分钟更新一次地理位置信息
+			//设置半个小时更新一次地理位置信息
 			rc := comm.Pool.Get()
 			defer rc.Close()
 			v,err := redis.Int64(rc.Do("EXISTS",mp.Request.FromUserName))
 			fmt.Println(err)
-			fmt.Println(v)
             if v == 0{
-				l,err := common.GetGps(mp.Request.Latitude,mp.Request.Longitude)
-				fmt.Println(l)
+				l,err := common.GetLocation(mp.Request.Latitude,mp.Request.Longitude)
 				if err == nil {
-					var long,lat float64
-					for _,vs := range l.Result{
-						long = vs.X
-						lat  = vs.Y
-						break
-					}
+					province:=l.Result.AddressComponent.Province
+					city:=l.Result.AddressComponent.City
 					//将用户的经纬度信息加入redis GEO
-					rc.Do("GEOADD",comm.LocationGeo,long,lat,mp.Request.FromUserName)
-					rc.Do("SETEX",mp.Request.FromUserName, 60*15,long)
+					geoKey := province+"-"+city
+					rc.Do("GEOADD",geoKey,mp.Request.Longitude,mp.Request.Latitude,mp.Request.FromUserName)
+					rc.Do("SETEX",mp.Request.FromUserName, 60*30,mp.Request.Longitude)
+					FromUserName := []string{mp.Request.FromUserName}
+					user,err := models.GetUsersByOpenId(FromUserName)
+					if err==nil{
+						user.Long   = mp.Request.Longitude
+						user.Lat    = mp.Request.Latitude
+						user.Province = province
+						user.City     = city
+						user.Logintime = time.Now().Unix()
+						models.UpdateUsersById(user)
+					}
 				}
 			}
 		}
@@ -111,7 +135,6 @@ func (this *ApiController) Index() {
 			if err ==nil{
 				FromUserName := []string{mp.Request.FromUserName}
 				_,errs := models.GetUsersByOpenId(FromUserName)
-				fmt.Println(errs)
 				if errs != nil{
 					user := models.Users{}
 					id := models.GetID()
@@ -127,9 +150,12 @@ func (this *ApiController) Index() {
 					user.Qq    = ""
 					user.Weino = ""
 					user.Signature  = ""
-					user.Address    =  userInfo.Province+","+userInfo.City
+					user.Province	=  userInfo.Province
+					user.City	    =  userInfo.City
+					user.Address    =  ""
+					user.Logintime	=  time.Now().Unix()
 					user.Created_at =  time.Now().Unix()
-					user.Updated_at = 0
+					user.Updated_at =  time.Now().Unix()
 					err := user.InsertValidation()
 					if err != nil {
 						mp.ReplyTextMsg(this.Ctx.ResponseWriter, err.Error())
@@ -224,31 +250,15 @@ func (this *ApiController) Index() {
 	}
 }
 
-func (this *ApiController) Login()  {
-
-	token,err := common.GetToken("1982")
-	if 0 == len(token) {
-		fmt.Println(token,err.Error())
-		fmt.Sprintf("get token failed")
-		this.StopRun()
-	}
-	fmt.Println(token)
-	this.Data["json"] = common.Actionsuccess
-	this.ServeJSON()
-
-	/*idworker,_ := common.NewIdWorker(12,5)
-	id,_ := idworker.NextId()
-	fmt.Println(id)*/
-	//s,_:= common.GetAccessToken("1203939180183","os01")
-	//common.VerifyAccessToken(s,"1203939180183","os01")
-
-}
 
 func (this *ApiController)Test()  {
+	go  models.Producter(models.BotMsgThree)
+	//go models.Producter(models.BotMsgTwo)
 	this.Data["json"] = common.ErrPermission
 	this.ServeJSON()
 	this.StopRun()
 }
+
 
 func (this *ApiController)StopRunning()  {
 	param := this.Ctx.Input.Param(":type")
@@ -257,7 +267,198 @@ func (this *ApiController)StopRunning()  {
 	}else{
 		this.Data["json"] = common.ErrExpired
 	}
-
 	this.ServeJSON()
 	this.StopRun()
 }
+
+
+//绑定微信用户
+func (this *ApiController) BindWxUser() {
+	n := models.Wxusers{}
+	if err := this.ParseForm(&n); err != nil {
+		this.Rsp(false, err.Error(),"")
+		return
+	}
+	var id int64
+	var err error
+	var Nid int64
+	var condtion = "AND bin = '"+fmt.Sprintf("%d",n.Bin)+"'"
+	condtion += "AND remark_name = '"+n.RemarkName+"'"
+	if user,err := models.GetWxuser(condtion);err == nil{
+		fmt.Println(err)
+		fmt.Println(user)
+		Nid = int64(user.Id)
+	}else{
+		Nid, _= this.GetInt64("Id")
+	}
+	fmt.Println(Nid)
+	if Nid > 0 {
+		id, err = models.UpdateWxuser(&n)
+	} else {
+		id, err = models.AddWxuser(&n)
+	}
+	if err == nil && id > 0 {
+		this.Rsp(true, "Success","")
+		return
+	} else {
+		this.Rsp(false, err.Error(),"")
+		return
+	}
+}
+
+
+
+func (this *ApiController) BotMsg() {
+	if v := CheckAuth(this.Ctx.Request);!v {
+		fmt.Println(v)
+		this.Data["json"] = &map[string]interface{}{"code":0,"msg": "无操作权限!","data":""}
+		this.ServeJSON()
+	}
+	var  helper models.Helper
+	if v,_ := this.GetInt("Uin");v !=0 {
+		helper.Uin = v
+	}else{
+		Json := map[string]interface{}{"code":200,"msg": "成功!","data":BotConfAndAction()}
+		this.Data["json"] = &Json
+		this.ServeJSON()
+		return
+	}
+	Uin := strconv.Itoa(helper.Uin)
+	//models.Cache.Delete(Uin)
+	channel := models.Cache.Get(Uin)
+    if channel == "" {
+		if v := this.GetString("UserName");v !="" {
+			helper.UserName = v
+		}
+		if v := this.GetString("NickName");v !="" {
+			helper.NickName = v
+		}
+		var condtion = "AND uin = '"+Uin+"'"
+		h,err := models.GetHelperByUserName(condtion)
+		if err != nil{
+			cond := " ORDER BY channel DESC"
+			c,err := models.GetHelperByUserName(cond)
+			if err != nil{
+				fmt.Println(err)
+				Json := map[string]interface{}{"code":0,"msg": "成功!","data":BotConfAndAction()}
+				this.Data["json"] = &Json
+				this.ServeJSON()
+				return
+			}
+			//为新的小助手分配channel
+			helper.Channel = c.Channel+1
+			id,err := models.AddHelper(&helper)
+			fmt.Println(err)
+			fmt.Println(id)
+		}else{
+			//数据库查询到放入本地缓存
+			err = models.Cache.Put(Uin,h.Channel)
+			helper.Channel = h.Channel
+		}
+	}else{
+		if value, ok := channel.(int);ok{
+			helper.Channel = value
+		}
+	}
+	var ok bool = false
+	var ch  models.Channel
+	switch helper.Channel {
+	    case 1:
+			ok  = ch.ChannelOne()
+			goto MsgChannel
+			break
+		case 2:
+			ok  = ch.ChannelTwo()
+			goto MsgChannel
+			break
+		case 3:
+			ok = ch.ChannelThree()
+			goto MsgChannel
+			break
+		case 4:
+			ok = ch.ChannelFour()
+			goto MsgChannel
+			break
+		case 5:
+			ok = ch.ChannelFive()
+			goto MsgChannel
+			break;
+		case 6:
+			ok = ch.ChannelSex()
+			goto MsgChannel
+			break
+		case 7:
+			ok = ch.ChannelSeven()
+			goto MsgChannel
+			break
+		case 8:
+			ok = ch.ChannelEigth()
+			goto MsgChannel
+			break
+	    case 9:
+			ok = ch.ChannelNine()
+			goto MsgChannel
+			break
+		case 10:
+			ok = ch.ChannelTen()
+			goto MsgChannel
+			break
+	   default:
+		   Json := map[string]interface{}{"code":999,"msg": "退出!","data":BotConfAndAction()}
+		   this.Data["json"] = &Json
+		   this.ServeJSON()
+		   break
+	}
+	MsgChannel:
+	   var Json   map[string]interface{}
+	   fmt.Println(ok)
+	   if ok == true {
+		   Json = map[string]interface{}{"code":200,"msg": "成功!","data":BotConfAndAction()}
+	   }else{
+		   Json = map[string]interface{}{"code":0,"msg": "成功!","data":BotConfAndAction()}
+	   }
+	  this.Data["json"] = &Json
+	  this.ServeJSON()
+}
+
+func CheckAuth(r *http.Request) bool {
+	s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+	if len(s) != 2 || s[0] != "Basic" {
+		return false
+	}
+	b, err := base64.StdEncoding.DecodeString(s[1])
+	if err != nil {
+		return false
+	}
+	pair := strings.SplitN(string(b), ":", 2)
+	if len(pair) != 2 {
+		return false
+	}
+	//查询缓存或数据库
+	if pair[0]=="kasoly" {
+		return true
+	}
+	return false
+}
+
+//机器人配置信息和机器人动作
+func BotConfAndAction() (msg []map[string]interface{}){
+	conf := map[string]interface{}{
+		"Text":`您好！关于您购买的【商业计划书模板案例融资大学生创业企业职业生涯规划项目策划研究】已发货：
+        【解压版】链接: https://pan.baidu.com/s/1bpH45cj 密码: 8zfb
+		【压缩版】链接：https://pan.baidu.com/s/1hsMJzIO 密码：6b3v
+ 		手机用户可以直接打开解压版，压缩版请下载到本地电脑解压，如文件超数量限制请分批保存。
+		评价10字、5★ 好 评，自动赠送2000G 好 评 大礼包！给个 好 评 吧~~亲~~~！`,
+		"Img":"http://n.sinaimg.cn/default/4_img/uplaod/3933d981/20170908/i9ew-fykuffc4351895.jpg",
+		"Verify":"已添加小助手为好友!请按操作继续完成绑定信息!",
+		"Action":"action",
+		"MsgId":"",
+		"RemarkName":"A1505124398",
+		"Bin":"",
+		"Channel":0,
+		"MsgType":1990,
+	}
+	msg = append(msg,conf)
+	return msg
+}
+

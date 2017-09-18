@@ -2,7 +2,6 @@ package controllers
 
 import (
 	comm "common/conndatabase"
-	"common"
 	"models"
 	"fmt"
 	"time"
@@ -19,21 +18,19 @@ type BooknewsController struct {
 // @Summary  借书消息列表
 // @Description  借书消息列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   length     formData   string  false      "分页步长"
-// @Param   draw       formData   string  false      "当前页"
-// @Param   userid     formData   string  true      "用户编号"
-// @Param   bookqid    formData   string  false     "图书唯一编号"
-// @Param   newid      formData   string  false       "消息编号"
-// @Param   order_state   formData   string  false   "消息状态1:同意2:拒绝,3:完成，0：借书请求'"
+// @Param   token      header     string  true     "token"
+// @Param   length     formData   string  false    "分页步长"
+// @Param   draw       formData   string  false    "当前页"
+// @Param   bookqid    formData   string  false    "图书唯一编号"
+// @Param   newid      formData   string  false    "消息编号"
+// @Param   order_state   formData   string  false  "消息状态1:同意2:拒绝,3:完成，0：借书请求'"
 // @Failure 500 服务器错误!
 // @router /newsList [post]
 func (this *BooknewsController) Newslist() {
 	length, _ := this.GetInt("length",10)//获取分页步长
 	draw, _ := this.GetInt("draw",1)  //当前页
 	var conditions string = " "
-	if v := this.GetString("userid");v != ""{
-		conditions+= " and userid_from ='"+v+"'"
-	}
+	conditions+= " and userid_from ='"+this.Userid+"'"
 	if v := this.GetString("bookqid");v !="" {
 		conditions+= " and bookqid= '"+v+"'"
 	}
@@ -82,8 +79,7 @@ func (this *BooknewsController) Newslist() {
 		}
 		resPonse = append(resPonse,&book)
 	}
-	Json := map[string]interface{}{"draw":draw,"data":resPonse}
-	this.renderJson(Json)
+	this.Rsp(true, "获取成功!",&resPonse)
 }
 
 
@@ -92,25 +88,23 @@ func (this *BooknewsController) Newslist() {
 // @Summary  发起借书请求
 // @Description 发起借书请求
 // @Success 200  {<br/>"userid":"用户编号","bookqid":"图书唯一编号","bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
 // @Param   from   formData   string  true    "书主人用户编号"
-// @Param   to   formData   string  true      "借书人用户编号"
 // @Param   bookqid   formData   string  true  "书主人书架图书唯一编号"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /libraryrequest [post]
 func (this *BooknewsController) Libraryrequest() {
-	bookqid  :=   this.GetString("bookqid")
+	bookqid  :=  this.GetString("bookqid")
 	from    :=   this.GetString("from")
-	to      :=   this.GetString("to")
+	to      :=   this.Userid
 	if from =="" || bookqid=="" || to == ""{
-		common.ErrSystem.Message = "参数错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "参数错误!","")
 	}
 	//查询书主人用户书架
 	book,err:= models.GetUserBookRack(from,bookqid)
 	if err != nil {
-		common.ErrSystem.Message = "用户不存在当前图书!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "用户不存在当前图书!","")
 	}
 	//书信息
 	newBook := map[string]interface{}{}
@@ -129,8 +123,7 @@ func (this *BooknewsController) Libraryrequest() {
 	userInfo:= []string{from,to}
 	toUser,uerr := models.GetUsersByIds(userInfo)
 	if uerr != nil {
-		common.ErrSystem.Message = "借书人或书主人信息不存在!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "借书人或书主人信息不存在!","")
 	}
 	UserFrom := map[string]interface{}{}
 	UserTo   := map[string]interface{}{}
@@ -156,18 +149,15 @@ func (this *BooknewsController) Libraryrequest() {
 	}
 	fty,ferr:= json.Marshal(&UserFrom)
 	if ferr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	tty,terr:= json.Marshal(&UserTo)
 	if terr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	res,rerr:= json.Marshal(&newBook)
 	if rerr != nil{
-		common.ErrSystem.Message = "未知错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "未知错误!","")
 	}
 	//借书人消息
 	FromInfo := models.Booknews{}
@@ -199,13 +189,10 @@ func (this *BooknewsController) Libraryrequest() {
 			err = o.Rollback()
 		}
 		if err == nil{
-			common.Actionsuccess.Message ="借书请求发送成功!"
-			common.Actionsuccess.MoreInfo = &FromInfo
-			this.renderJson(common.Actionsuccess)
+			this.Rsp(true, "借书请求发送成功!",&FromInfo)
 		}
 	}
-	common.ErrSystem.Message = "未知错误,消息丢失!"
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false, "未知错误,消息丢失!","")
 }
 
 
@@ -214,6 +201,7 @@ func (this *BooknewsController) Libraryrequest() {
 // @Summary  更改借书请求状态
 // @Description 更改借书消息状态
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
 // @Param   newid   formData   string  true    "消息编号"
 // @Param   order_state   formData   string  true   "消息状态1:同意借书2:拒绝借书"
 // @Failure 100 错误提示信息!
@@ -223,8 +211,7 @@ func (this *BooknewsController) Libraryrequestupdate() {
 	newid   :=   this.GetString("newid")
 	order_state  :=   this.GetString("order_state")
 	if  order_state == "" || newid ==""{
-		common.ErrSystem.Message = "参数错误!"
-		this.renderJson(common.ErrSystem)
+		this.Rsp(false, "参数错误!","")
 	}
 	model := models.Booknews{}
 	Order := models.Bookorder{}
@@ -238,12 +225,12 @@ func (this *BooknewsController) Libraryrequestupdate() {
 		Order.Orderid =  newid
 		var flag bool = true
 		if  model.Order_state == 0{
-			Order.Userid_to = model.Userid_to
+			Order.Userid_to   = model.Userid_to
 			Order.Userid_from = model.Userid_from
 			Order.Books   =  model.Books
 			Order.Bookqid =  model.Bookqid
 			Order.User_from = model.User_from
-			Order.User_to  = model.User_to
+			Order.User_to   = model.User_to
 			Order.Create_time = t
 		}else{
 			flag = false
@@ -265,12 +252,9 @@ func (this *BooknewsController) Libraryrequestupdate() {
 				err = o.Rollback()
 			}
 			if err == nil{
-				common.Actionsuccess.Message ="当前消息状态已修改!"
-				common.Actionsuccess.MoreInfo = &model
-				this.renderJson(common.Actionsuccess)
+				this.Rsp(true, "当前消息状态已修改!",&model)
 			}
 		}
 	}
-	common.ErrSystem.Message = fmt.Sprint(err)
-	this.renderJson(common.ErrSystem)
+	this.Rsp(false, "未知错误!","")
 }

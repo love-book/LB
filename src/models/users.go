@@ -1,47 +1,60 @@
 package models
 
 import(
-	_ "common/conndatabase"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
-	"log"
 	"github.com/astaxie/beego/orm"
+	"log"
 	"fmt"
 	"strings"
 	"errors"
 	"reflect"
 	comm "common/conndatabase"
 	"github.com/garyburd/redigo/redis"
+	"strconv"
 )
 
 type  Users struct {
-	Userid		string	`json:"userid" orm:"pk;size(20);column(userid);"`
-	Openid  	string	`json:"openid"`
-	Wnickname  	string	`json:"wnickname"`
-	Wimgurl    	string 	`json:"wimgurl"`
-	Nickname  	string 	`json:"nickname"`
-	Imgurl    	string 	`json:"imgurl" `
-	Gender  	int64  	`json:"gender"`
-	Age   		int32 	`json:"age"`
-	Telphone  	string  `json:"telphone"`
-	Qq  		string  `json:"qq"`
-	Weino  		string  `json:"weibo"`
-	Signature  	string  `json:"signature"`
-	Address  	string  `json:"address"`
-	Created_at  int64  	`json:"created_at"`
-	Updated_at  int64  	`json:"updated_at"`
+	Userid		string	 `json:"userid" orm:"pk;size(20);column(userid);"`
+	Openid  	string	 `json:"openid"`
+	Wnickname  	string	 `json:"wnickname"`
+	Wimgurl    	string 	 `json:"wimgurl"`
+	Nickname  	string 	 `json:"nickname"`
+	Imgurl    	string 	 `json:"imgurl" `
+	Gender  	int64  	 `json:"gender"`
+	Age   		int32 	 `json:"age"`
+	Telphone  	string   `json:"telphone"`
+	Password	string   `json:"password"`
+	Qq  		string   `json:"qq"`
+	Weino  		string   `json:"weibo"`
+	Signature  	string   `json:"signature"`
+	Constellation string `json:"constellation"`
+	Province  	string   `json:"province"`
+	City  	    string   `json:"city"`
+	Address  	string   `json:"address"`
+	Long  	    float64  `json:"long"`
+	Lat  	    float64  `json:"lat"`
+	Logintime	int64  	 `json:"logintime"`
+	Created_at  int64  	 `json:"created_at"`
+	Updated_at  int64  	 `json:"updated_at"`
 }
 
 func init()  {
-	orm.RegisterModelWithPrefix("lb_",new(Users))
+	orm.RegisterModel(new(Users))
 }
+
+func (c *Users) TableName() string {
+	return beego.AppConfig.String("table_users")
+}
+
 
 //添加用户验证
 func (a Users) InsertValidation() error {
 	valid := validation.Validation{}
 	valid.Required(a.Userid,  "userid").Message("用户编号不能为空！")
 	valid.Required(a.Nickname, "nickname").Message("用户昵称不能为空！")
-	valid.MaxSize(a.Nickname,50,"nickname").Message("用户昵称不大于50个字符！")
-	valid.MinSize(a.Nickname,5,"nickname").Message("用户昵称不小于5个字符！")
+	valid.MaxSize(a.Nickname,30,"nickname").Message("用户昵称不大于30个字符！")
+	valid.MinSize(a.Nickname,2,"nickname").Message("用户昵称不小于2个字符！")
 	//valid.Range(a.Age, 0, 100, "age").Message("年龄不符合范围！")
 	if valid.HasErrors() {
 		for _, err := range valid.Errors {
@@ -84,6 +97,16 @@ func GetUsersByOpenId(id []string)(u *Users,err error){
 	err = RawSeter.QueryRow(&u)
 	return
 }
+
+//查询用户
+func GetUsersBypass(pram []string)(u *Users,err error){
+	sql:= "select * from lb_users  where telphone =? and password =? limit 1"
+	RawSeter := orm.NewOrm().Raw(sql,pram)
+	err = RawSeter.QueryRow(&u)
+	return
+}
+
+
 
 // AddUsers insert a new Users into database and returns
 // last inserted Id on success.
@@ -215,8 +238,10 @@ func  GetLocationByID(openid string)(l map[string]interface{},err error){
 	v,err := redis.Positions(rc.Do("GEOPOS",comm.LocationGeo,openid))
 	l = make(map[string]interface{},len(v))
 	for _,vs := range v{
-		l["long"] = vs[0]
-		l["lat"]  = vs[1]
+		if vs != nil{
+			l["long"] = vs[0]
+			l["lat"]  = vs[1]
+		}
 		break
 	}
 	return
@@ -224,24 +249,23 @@ func  GetLocationByID(openid string)(l map[string]interface{},err error){
 
 
 //根据openid获取附近的人
-func  GetUsersByLocaltion(openid string,radius int64)(re []map[string]interface{},err error){
+func  GetUsersByLocaltion(openid string,geokey string,radius int64)(re []map[string]string,err error){
 	rc := comm.Pool.Get()
 	defer rc.Close()
-	re,err = RadiusByMember(rc.Do("GEORADIUSBYMEMBER",comm.LocationGeo,openid,radius,"m","WITHDIST"))
+	re,err = RadiusByMember(rc.Do("GEORADIUSBYMEMBER",geokey,openid,radius,"m","WITHDIST"))
 	return
 }
 
-func RadiusByMember(result interface{}, err error) ([]map[string]interface{},error) {
+func RadiusByMember(result interface{}, err error) ([]map[string]string,error) {
 	values, err := redis.Values(result, err)
 	if err != nil {
 		return  nil,err
 	}
-	radiusMap := make([]map[string]interface{}, len(values))
+	radiusMap := make([]map[string]string, len(values))
 	for i := range values {
 		if values[i] == nil {
 			continue
 		}
-		fmt.Println(values[i])
 		p, ok := values[i].([]interface{})
 		if !ok {
 			return nil,fmt.Errorf("redigo: unexpected element type for interface slice, got type %T", values[i])
@@ -254,9 +278,9 @@ func RadiusByMember(result interface{}, err error) ([]map[string]interface{},err
 		if err != nil {
 			return nil, err
 		}
-		res := make(map[string]interface{},len(p))
+		res := make(map[string]string,len(p))
 		res["member"] = member
-		res["radius"] = radius
+		res["radius"] = strconv.FormatFloat(radius,'f', -1, 64)
 		radiusMap[i] = res
 	}
 	return radiusMap,nil

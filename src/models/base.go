@@ -3,12 +3,8 @@ package models
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
-	_ "github.com/go-sql-driver/mysql"
 	"net/url"
 	"strings"
-	"strconv"
 	"common/conndatabase"
 	"time"
 )
@@ -59,43 +55,7 @@ func Rawurlencode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
 
-//返回带前缀的表名
-func TableName(str string) string {
-	return fmt.Sprintf("%s%s", beego.AppConfig.String("dbprefix"), str)
-}
 
-
-/**
- * 分页函数，适用任何表
- * 返回 总记录条数,总页数,以及当前请求的数据RawSeter,调用中需要"rs.QueryRows(&tblog)"就行了  --tblog是一个Tb_log对象
- * 参数：表名，当前页数，页面大小，条件（查询条件,格式为 " and name='zhifeiya' and age=12 "）
- *
-	start, _ := this.GetInt("start") //获取起始位置
-	length, _ := this.GetInt("length") //获取分页步长
-	draw, _ := this.GetInt("draw") //获取请求次数
-	var user []models.User
-	var conditions string = " order by userid desc"
-	var  TableName = "lb_users"
-	totalItem, rs :=models.GetPagesInfo(TableName,start,length,conditions)
-	rs.QueryRows(&user)
-	Json := map[string]interface{}{"draw":draw,"recordsTotal": totalItem,"recordsFiltered":totalItem,"data":user}
-	this.renderJson(Json)
-
- */
-func GetPagesInfo(tableName string, start int, pagesize int, conditions string,filed string) (int, orm.RawSeter) {
-	if start < 1 {
-		start = 0
-	}
-	if pagesize == 0 {
-		pagesize = 15
-	}
-	var rs orm.RawSeter
-	o := orm.NewOrm()
-	var totalItem  int = 0                                                          //总条数
-	o.Raw("SELECT count(*) FROM " + tableName + "  where true " + conditions).QueryRow(&totalItem) //获取总条数
-	rs = o.Raw("select "+filed+"  from  " + tableName + "  where true " + conditions + " LIMIT " + strconv.Itoa(start) + "," + strconv.Itoa(pagesize))
-	return totalItem,  rs
-}
 
 //获取ID主键
 func GetID() int64{
@@ -113,7 +73,3 @@ func GetID() int64{
 	}
 	return id
 }
-
-
-
-
