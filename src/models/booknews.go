@@ -1,6 +1,7 @@
 package models
 
 import(
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_"common/conndatabase"
 	"strconv"
@@ -33,9 +34,12 @@ type BooknewsList struct {
 	Update_time int64	`json:"update_time"`
 }
 
+func (b *Booknews) TableName() string {
+	return beego.AppConfig.String("table_booknews")
+}
 
 func init()  {
-	orm.RegisterModelWithPrefix("lb_",new(Booknews))
+	orm.RegisterModel(new(Booknews))
 }
 
 func  BooknewsListData(start int,length int,conditions string) (books []*Booknews){

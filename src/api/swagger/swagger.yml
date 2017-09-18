@@ -732,7 +732,7 @@ paths:
             "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
-            "距离"'
+            "距离"// @Param   token       header     string  true  "token"'
         "500":
           description: 服务器错误!
   /bookrack/getbookusers:
@@ -777,7 +777,7 @@ paths:
             "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
-            "距离"'
+            "距离"// @Param   token       header     string  true  "token"'
         "500":
           description: 服务器错误!
   /bookrack/getmybooklist:
@@ -817,7 +817,7 @@ paths:
             "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
-            "距离"'
+            "距离"// @Param   token       header     string  true  "token"'
         "500":
           description: 服务器错误!
   /bookrack/mybookrack:
@@ -857,7 +857,7 @@ paths:
             "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation":
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
-            "距离"'
+            "距离"// @Param   token       header     string  true  "token"'
         "500":
           description: 服务器错误!
   /users/addlocaltionbyid:

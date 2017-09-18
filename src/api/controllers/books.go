@@ -408,10 +408,10 @@ func (this *BooksController) ConcernBookList() {
 		json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&lists}
 		this.Rsp(true, "获取成功!",&json)
 	}else{
-		var resPonse []interface{}
-		concerns := map[string]interface{}{}
-		b := map[string]interface{}{}
+		resPonse := []interface{}{}
 		for _,v:= range lists{
+			concerns := map[string]interface{}{}
+			b := map[string]interface{}{}
 			concerns["concernid"] = v.Concernid
 			concerns["userid_to"] = v.UseridTo
 			concerns["userid_from"] = v.UseridFrom
@@ -454,9 +454,9 @@ func (this *BooksController) ConcernUserList() {
 		this.Rsp(true, "获取成功!",&json)
 	}else{
 		var resPonse []interface{}
-		concerns := map[string]interface{}{}
-		b := map[string]interface{}{}
 		for _,v:= range lists{
+			concerns := map[string]interface{}{}
+			b := map[string]interface{}{}
 			concerns["concernid"] = v.Concernid
 			concerns["userid_to"] = v.UseridTo
 			concerns["userid_from"] = v.UseridFrom

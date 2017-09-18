@@ -1,6 +1,7 @@
 package models
 
 import(
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_"common/conndatabase"
 	"strconv"
@@ -19,10 +20,13 @@ type Bookorder struct {
 	Update_time int64	`json:"update_time"`
 }
 
-func init()  {
-	orm.RegisterModelWithPrefix("lb_",new(Bookorder))
+func (b *Bookorder) TableName() string {
+	return beego.AppConfig.String("table_bookorder")
 }
 
+func init()  {
+	orm.RegisterModel(new(Bookorder))
+}
 
 func  BookOrderListData(start int,length int,conditions string) (order []*Bookorder){
 	var  rowsSql  = "select * from  lb_bookorder  where true "+conditions+"  order by pushtime desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)

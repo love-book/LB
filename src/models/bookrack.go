@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"strconv"
 	"fmt"
@@ -52,15 +53,13 @@ type BookState struct {
 	Book_state     string   `json:"book_state"`
 }
 
+func (b *Bookrack) TableName() string {
+	return beego.AppConfig.String("table_bookrack")
+}
 
 func init()  {
 	orm.RegisterModel(new(Bookrack))
 }
-
-func (b *Bookrack) TableName() string {
-	return "lb_bookrack"
-}
-
 
 func  BooksrackList(start int,length int,conditions string) (books []*BookrackList){
     var  rowsSql  = "select r.*,b.*,u.openid,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
