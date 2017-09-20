@@ -42,16 +42,35 @@ type BookrackList struct {
 }
 
 
+type BookconcernInfo struct {
+	Bookqid      string  `json:"bookqid"`
+	Userid       string  `json:"userid"`
+	Bookid       string  `json:"bookid"`
+	Book_state   string  `json:"book_state"`
+	Is_borrow    string  `json:"is_borrow"`
+	Create_time  int64   `json:"create_time"`
+	Update_time  int64   `json:"update_time"`
+	Bookname     string  `json:"bookname"`
+	Author       string	 `json:"auhtor""`
+	Imageurl     string	 `json:"imageurl"`
+	Imagehead    string	 `json:"imagehead"`
+	Imageback    string	 `json:"imageback"`
+	Isbn         string	 `json:"isbn"`
+	Depreciation uint8	 `json:"depreciation"`
+	Price        uint16	 `json:"price"`
+	Describe     string	 `json:"describe"`
+	State        uint8	 `json:"state" `
+	Concernid    string	 `json:"concernid"`
+	UseridTo     string  `json:"userid_to"`
+	UseridFrom   string  `json:"userid_from"`
+	ConcernType  string	 `json:"concern_type"`
+	CreatedAt    int64   `json:"created_at"`
+}
 type BookExist struct {
 	Userid       string   `json:"userid"`
 	Bookid       string   `json:"bookid"`
 }
 
-
-type BookState struct {
-	Bookqid       string   `json:"bookqid"`
-	Book_state     string   `json:"book_state"`
-}
 
 func (b *Bookrack) TableName() string {
 	return beego.AppConfig.String("table_bookrack")
@@ -77,12 +96,21 @@ func  MyBooksrackList(start int,length int,conditions string) (books []*Bookrack
 	return  books,totalItem
 }
 
+func  MyBookconcernInfo(conditions string) (book *BookconcernInfo){
+	var  rowsSql  = "select r.*,b.*,c.concernid,c.userid_to,c.userid_from,c.concern_type,c.created_at from  lb_bookrack as r inner  join lb_books  as b on r.bookid = b.bookid  left  join lb_concern as c on c.userid_from = r.bookid  where true "+conditions+"  limit 1"
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRow(&book)
+	return  book
+}
+
+//收藏图书信息
 func  MyBooksrackInfo(conditions string) (book *BookrackList){
 	var  rowsSql  = "select r.*,b.*,u.* from  lb_bookrack as r inner  join lb_books  as b on r.bookid = b.bookid  inner  join lb_users as u on u.userid = r.userid  where true "+conditions+"  limit 1"
 	o := orm.NewOrm()
 	o.Raw(rowsSql).QueryRow(&book)
 	return  book
 }
+
 
 //根据id查询
 func GetBookById(bookqid string) (v *Bookrack, err error) {
@@ -125,3 +153,16 @@ func UpdateBookRackById(m *Bookrack) (err error) {
 	return
 }
 
+func AddBookrack(b *Bookrack) (int64, error) {
+	o := orm.NewOrm()
+	bookrack := new(Bookrack)
+	bookrack.Bookqid= b.Bookqid
+	bookrack.Userid = b.Userid
+	bookrack.Bookid = b.Bookid
+	bookrack.Book_state = b.Book_state
+	bookrack.Is_borrow  = b.Is_borrow
+	bookrack.Create_time = b.Create_time
+	bookrack.Update_time = b.Update_time
+	id, err := o.Insert(bookrack)
+	return id, err
+}

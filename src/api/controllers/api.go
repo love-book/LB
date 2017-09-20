@@ -71,6 +71,19 @@ func (this *ApiController) Rsp(status bool, msg string,data interface{}) {
 	this.StopRun()
 }
 
+//interface 类型转换
+func GetType(e interface{})(v interface{}){
+	switch v := e.(type) {
+		case int:
+			fmt.Println("整型", v)
+			var s int
+			s = v
+			fmt.Println(s)
+		case string:
+			fmt.Println("字符串", v)
+	}
+   return
+}
 
 func (this *ApiController) Index() {
 	token  :=  beego.AppConfig.String("token") // 微信公众平台的Token

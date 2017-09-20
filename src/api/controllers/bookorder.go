@@ -13,27 +13,19 @@ type BookorderController struct {
 	ApiController
 }
 
-// @Title 订单列表
-// @Summary 订单列表
-// @Description  订单列表
+// @Title        交换记录列表
+// @Summary      交换记录列表
+// @Description  交换记录列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   length    formData   string  false      "获取分页步长"
-// @Param   draw      formData   string  false      "当前页"
-// @Param   bookname  formData   string  false   "书名"
-// @Param   author    formData   string  false   "作者"
-// @Param   bookid    formData   string  false   "图书编号"\
-// @Param   bookqid    formData   string  false   "用户书架图书唯一编号"
-// @Param   isbn      formData   string  false  "图书条形码"
-// @Param   orderid    formData   string  false   "订单编号"
-// @Param   userid_from    formData   string  false   "书主人编号"
-// @Param   userid_to    formData   string  false   "借书人编号"
-// @Param   order_state    formData   string  false   "消息状态1:同意2:拒绝,3:完成，0：借书请求'"
+// @Param   token   header     string  true  "token"
+// @Param	body	body 	 models.OrderlistForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 500 服务器错误!
 // @router /orderList [post]
 func (this *BookorderController) Orderlist() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob *models.OrderlistForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	var conditions string = " "
 	if v := this.GetString("bookid");v !="" {
 	   conditions+= " and JSON_EXTRACT(books,'$.bookid') = '"+v+"'"
@@ -53,9 +45,6 @@ func (this *BookorderController) Orderlist() {
 	if v := this.GetString("orderid");v !="" {
 		conditions+= " and orderid = '"+v+"'"
 	}
-	if v := this.GetString("userid_from");v !="" {
-		conditions+= " and userid_from = '"+v+"'"
-	}
 	if v := this.GetString("userid_to");v !="" {
 		conditions+= " and userid_to = '"+v+"'"
 	}
@@ -65,13 +54,14 @@ func (this *BookorderController) Orderlist() {
 	if v := this.GetString("bookqid");v !="" {
 		conditions+= " and bookqid = '"+v+"'"
 	}
+	conditions+= " and userid_from = '"+this.Userid+"'"
 	books :=models.BookOrderListData((draw-1)*length,length,conditions)
 	var resPonse []interface{}
-	book  := map[string]interface{}{}
-	JsonBook  := map[string]interface{}{}
-	JsonFrom  := map[string]interface{}{}
-	JsonTo  := map[string]interface{}{}
 	for _,val := range books{
+		book  := map[string]interface{}{}
+		JsonBook  := map[string]interface{}{}
+		JsonFrom  := map[string]interface{}{}
+		JsonTo  := map[string]interface{}{}
 		book["orderid"]     =  val.Orderid
 		book["userid_from"] =  val.Userid_from
 		book["userid_to"]   =  val.Userid_to
@@ -107,16 +97,16 @@ func (this *BookorderController) Orderlist() {
 
 
 
-// @Title  创建订单
-// @Summary  创建订单
-// @Description 创建订单
-// @Success 200  {<br/>"userid":"用户编号", "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   from   formData   string  true    "书主人用户编号"
-// @Param   bookqid   formData   string  true  "书主人书架图书唯一编号"
-// @Failure 100 错误提示信息!
-// @Failure 500 服务器错误!
-// @router /orderadd [post]
+// Title  创建订单
+// Summary  创建订单
+// Description 创建订单
+// Success 200  {<br/>"userid":"用户编号", "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// Param   token       header     string  true  "token"
+// Param   from   formData   string  true    "书主人用户编号"
+// Param   bookqid   formData   string  true  "书主人书架图书唯一编号"
+// Failure 100 错误提示信息!
+// Failure 500 服务器错误!
+// router /orderadd [post]
 func (this *BookorderController) Orderadd() {
 	bookqid  :=   this.GetString("bookqid")
 	from    :=   this.GetString("from")
@@ -204,16 +194,16 @@ func (this *BookorderController) Orderadd() {
 
 
 
-// @Title    更改订单
-// @Summary  更改订单
-// @Description 更改订单
-// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   orderid   formData   string  true    "订单编号"
-// @Param   order_state   formData   string  true   "消息状态状态1:同意2:拒绝,3:完成，0：借书请求"
-// @Failure 100 错误提示信息!
-// @Failure 500 服务器错误!
-// @router /orderupdate [post]
+// Title    更改订单
+// Summary  更改订单
+// Description 更改订单
+// Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// Param   token       header     string  true  "token"
+// Param   orderid   formData   string  true    "订单编号"
+// Param   order_state   formData   string  true   "消息状态状态1:同意2:拒绝,3:完成，0：借书请求"
+// Failure 100 错误提示信息!
+// Failure 500 服务器错误!
+// router /orderupdate [post]
 func (this *BookorderController) Orderupdate() {
 	orderid   :=   this.GetString("orderid")
 	order_state  :=   this.GetString("order_state")

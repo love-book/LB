@@ -15,6 +15,7 @@ type Bookorder struct {
 	Books       string  `json:"books"  valid:"Required"`
 	User_from   string	`json:"user_from" valid:"Required"`
 	User_to     string	`json:"user_to"`
+	Order_type  uint8   `json:"order_state" valid:"Required;Range(1,2)"`
 	Order_state uint8   `json:"order_state" valid:"Required;Range(1,2,3)"`
 	Create_time int64	`json:"create_time"`
 	Update_time int64	`json:"update_time"`

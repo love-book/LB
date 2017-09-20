@@ -6,6 +6,7 @@ import(
 	_"common/conndatabase"
 	"strconv"
 	"fmt"
+	"errors"
 )
 
 type Books struct {
@@ -87,4 +88,14 @@ func  GetConcernList(start int,length int,conditions string) (concerns []*Concer
 	o.Raw(countSql).QueryRow(&totalItem) //获取总条数
 	o.Raw(rowsSql).QueryRows(&concerns)
 	return  concerns,totalItem
+}
+
+
+func GetBook(id string) (b *Books, err error) {
+	o := orm.NewOrm()
+	v := Books{Bookid: id}
+	if err = o.Read(&v); err == nil {
+		return b, nil
+	}
+	return nil, errors.New("Book not exists")
 }

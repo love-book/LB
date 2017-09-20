@@ -20,33 +20,35 @@ type BooksrackController struct {
 // @Title    书城
 // @Summary  书城
 // @Description  书城
-// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"
-// @Param   length    formData   string  false  "获取分页步长"
-// @Param   draw      formData   string  false  "当前页"
-// @Param   gender    formData   string  false  "性别"
-// @Param   age 	  formData   string  false  "年龄范围"
-// @Param   radius    formData   string  false  "方圆多少米范围内"
+// @Success 200 {<br/>"bookqid":"图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离" <br/>}
+// @Param   token     header   string  true  "token"
+// @Param	body	  body 	models.BookracklistForm   true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围20-30",<br/>"radius":"方圆多少米范围内200-300-string"<br/>}"
 // @Failure 500 服务器错误!
 // @router /bookracklist [post]
 func (this *BooksrackController) Bookracklist() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.BookracklistForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	var conditions string = " "
 	conditions+= " and r.book_state ='1'"
-	if 	v := this.GetString("gender");v !="" {
-		conditions+= " and u.gender ="+v
+	if ob.Gender !="" {
+		conditions+= " and u.gender ="+ob.Gender
 	}
-	if v := this.GetString("age");v !="" {
-		ageRange:=strings.Split(v,"-")
+	if ob.Age !="" {
+		ageRange:=strings.Split(ob.Age,"-")
 		conditions+= " and u.age >="+ageRange[0]
 		conditions+= " and u.age <="+ageRange[1]
 	}
-	if v,_:= this.GetInt64("radius");v !=0 {
-		u,err:=models.GetUsersById(this.Userid)
+	if ob.Radius!="" {
+		u,err:= models.GetUsersById(this.Userid)
 		if err == nil{
+			radiusRange:=strings.Split(ob.Radius,"-")
+			radius,err:=strconv.ParseInt(radiusRange[1], 10, 64)
+			fmt.Println(radius)
 			var openstr string = ""
 			geokey :=u.Province+"-"+u.City
-			re,err := models.GetUsersByLocaltion(this.Openid,geokey,v)
+			re,err := models.GetUsersByLocaltion(this.Openid,geokey,radius)
 			if err ==nil{
 				for _,v := range re{
 					openstr+= "'"+v["member"]+"',"
@@ -72,21 +74,21 @@ func (this *BooksrackController) Bookracklist() {
 // @Summary  添加到书架
 // @Description 添加到书架
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   bookid   formData   string  true    "图书编号"
+// @Param   token   header   string  true  "token"
+// @Param	body	body   models.BookrackaddForm	true "{ <br/>"bookid":"图书编号" <br/>}"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /bookrackadd [post]
 func (this *BooksrackController) Bookrackadd() {
-	userid   :=   this.Userid
-	bookid   :=   this.GetString("bookid")
-	if userid =="" || bookid==""{
+	var ob  *models.BookrackaddForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	userid := this.Userid
+	bookid := ob.Bookid
+	if bookid=="" || userid==""{
 		this.Rsp(false, "参数错误!","")
 	}
 	//查询图书信息
-	model := models.Books{}
-	model.Bookid = bookid
-	if Bookserr := comm.Read(&model);Bookserr != nil {
+	if _,err:= models.GetBook(bookid);err != nil {
 		this.Rsp(false, "没有当前图书!","")
 	}
 	//加入用户书架
@@ -100,8 +102,8 @@ func (this *BooksrackController) Bookrackadd() {
 		id := models.GetID()
 		book.Bookqid = fmt.Sprintf("%d",id)
 		book.Create_time = time.Now().Unix()
-		book.Update_time = 0
-		err := comm.Insert(&book)
+		book.Update_time = time.Now().Unix()
+		id,err = models.AddBookrack(&book)
 		if err != nil {
 			this.Rsp(false, "图书加入书架失败!","")
 		}
@@ -113,18 +115,19 @@ func (this *BooksrackController) Bookrackadd() {
 // @Summary  扫条码添加到书架
 // @Description 扫条码添加到书架
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   isbn     formData   string  true  "图书条码"
+// @Param   token    header     string  true  "token"
+// @Param	body	body  models.BookrackaddbysnForm	true "{ <br/>"isbn":"图书条码" <br/>}"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /bookrackaddbysn [post]
 func (this *BooksrackController) Bookrackaddbysn() {
+	var ob  models.BookrackaddbysnForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 	userid  :=   this.Userid
-	isbn   := this.GetString("isbn")
-	if userid =="" || isbn==""{
+	isbn := ob.Isbn
+	if userid =="" ||isbn ==""{
 		this.Rsp(false, "参数错误!","")
 	}
-	//查询数据库是否存在该条形码
 	var Bookid string
 	model,err:= models.GetIbsn(isbn)
 	if err != nil {
@@ -205,18 +208,17 @@ func (this *BooksrackController) Bookrackaddbysn() {
 // @Description 批量上架/下架/删除图书
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
 // @Param   token     header     string  true  "token"
-// @Param   bookinfo  formData   string  true   [{"bookqid":"图书唯一编号","book_state":"书架图书状态状态1:上架;2:下架;3:待补充,4:删除"}]
-// @Failure 100 错误提示信息!
+// @Param	body	body  models.BookStateForm 	true "[<br/>{<br/>"bookqid":"图书编号",<br/>"book_state":"书架图书状态状态1:上架;2:下架;3:待补充,4:删除"<br/>},<br/> {<br/>"bookqid":"",<br/>"book_state":""<br/>} <br/>]"
+// @Failure 100 错误提示信息!y
 // @Failure 500 服务器错误!
 // @router /bookrackupdate [post]
 func (this *BooksrackController) Bookrackupdate() {
-	bookinfo   :=   this.GetString("bookinfo")
-	var state []*models.BookState
-	err:=json.Unmarshal([]byte(bookinfo),&state)
-	if bookinfo =="" || err != nil{
+	var ob []*models.BookStateForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if len(ob)<=0 {
 		this.Rsp(false,"参数错误!","")
 	}
-	for _,v:= range state{
+	for _,v:= range ob{
 		book,err:= models.GetBookById(v.Bookqid)
 		if err == nil {
 			book.Bookqid = v.Bookqid
@@ -241,16 +243,17 @@ func (this *BooksrackController) Bookrackupdate() {
 // @Title 我的书架
 // @Summary  我的书架
 // @Description 我的书架
-// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"// @Param   token       header     string  true  "token"
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"<br/>}
 // @Param   token       header     string  true  "token"
-// @Param   length    formData   string  false  "获取分页步长"
-// @Param   draw      formData   string  false  "当前页"
+// @Param	body	body 	 models.ConcernBookListForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /mybookrack [post]
 func (this *BooksrackController) Mybookrack() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.ConcernBookListForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	userid   :=  this.Userid
 	if userid =="" {
 		this.Rsp(false, "参数错误!","")
@@ -271,19 +274,19 @@ func (this *BooksrackController) Mybookrack() {
 // @Title 拥有此书的人
 // @Summary  拥有此书的人
 // @Description 拥有此书的人
-// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"// @Param   token       header     string  true  "token"
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"<br/>}
 // @Param   token       header     string  true  "token"
-// @Param   length    formData   string  false  "获取分页步长"
-// @Param   draw      formData   string  false  "当前页"
-// @Param   bookid   formData   string  true    "书编号"
+// @Param	body	  body 	models.GetbookusersForm  true   "{ <br/>"length":"获取分页步长-string", <br/>"draw":"当前页-string",<br/> "bookid":"书编号string"<br/>}"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /getbookusers [post]
 func (this *BooksrackController) Getbookusers() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
-	bookid  := this.GetString("bookid")
-	if bookid =="" {
+	var ob  *models.GetbookusersForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
+	bookid := ob.Bookid
+	if bookid==""{
 		this.Rsp(false, "参数错误!","")
 	}
 	var conditions string = " "
@@ -300,20 +303,22 @@ func (this *BooksrackController) Getbookusers() {
 // @Title    查看一本书信息
 // @Summary  查看一本书信息
 // @Description 查看一本书信息
-// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"// @Param   token       header     string  true  "token"
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"concernid":"收藏编号",<br/>"userid_to":"收藏人id", <br/>"userid_from":"图书编号",<br/>"concern_type":"收藏类型1:图书2:人",<br/> "created_at":"收藏时间"<br/>}
 // @Param   token       header     string  true  "token"
-// @Param   bookqid   formData   string  true    "图书唯一编号"
+// @Param	body	body  models.GetbookinfoForm	true  "{<br/>"bookid":"图书编号-string"<br/>}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /getbookinfo [post]
 func (this *BooksrackController) Getbookinfo() {
-	bookqid   :=   this.GetString("bookqid")
-	if bookqid == "" {
+	var ob  *models.GetbookinfoForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	bookid:= ob.Bookid
+	if bookid==""  {
 		this.Rsp(false, "参数错误!","")
 	}
 	var conditions string = " "
-	conditions+= " and r.bookqid ='"+bookqid+"'"
-	book := models.MyBooksrackInfo(conditions)
+	conditions+= " and r.bookid ='"+bookid+"'"
+	book := models.MyBookconcernInfo(conditions)
 	this.Rsp(true, "获取成功!",&book)
 }
 
@@ -322,18 +327,19 @@ func (this *BooksrackController) Getbookinfo() {
 // @Title    上架记录
 // @Summary  上架记录
 // @Description 上架记录
-// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"// @Param   token       header     string  true  "token"
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离" <br/>}
 // @Param   token       header     string  true  "token"
-// @Param   length    formData   string  false  "获取分页步长"
-// @Param   draw      formData   string  false  "当前页"
+// @Param	body	  body 	 models.GetbookusersForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /getmybooklist [post]
 func (this *BooksrackController) Getmybooklist() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.GetbookusersForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	userid   :=   this.Userid
-	if userid =="" {
+	if userid ==""{
 		this.Rsp(false, "参数错误!","")
 	}
 	var conditions string = " "
@@ -354,14 +360,16 @@ func (this *BooksrackController) Getmybooklist() {
 // @Description 扫条码获取图书
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
 // @Param   token       header     string  true  "token"
-// @Param   isbn     formData   string  true  "图书条码"
+// @Param	body	body  models.BookrackaddbysnForm	true  "{<br/>"isbn":"图书条码"<br/>}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /getbookbysn [post]
 func (this *BooksrackController) Getbookbysn() {
+	var ob  *models.BookrackaddbysnForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	isbn  := ob.Isbn
 	userid := this.Userid
-	isbn   := this.GetString("isbn")
-	if userid =="" || isbn==""{
+	if userid ==""|| isbn ==""{
 		this.Rsp(false, "参数错误!","")
 	}
 	//查询数据库是否存在该条形码

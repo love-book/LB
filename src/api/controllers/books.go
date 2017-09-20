@@ -133,33 +133,27 @@ func (this *BooksController) Bookupdate(){
 // @Title 添加书籍
 // @Summary  添加书籍
 // @Description 添加书籍
-// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"折旧",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   token       header     string  true  "token"
-// @Param   bookname   formData   string  true    "书名"
-// @Param   author     formData   string  false   "作者"
-// @Param   imgurl  formData   string  false    "图书封面图"
-// @Param   imghead    formData   string  false     "图书正面图"
-// @Param   imgback       formData   string  false    "图书背面图"
-// @Param   isbn      formData   string  false    "条形码"
-// @Param   describe      formData   string  false    "图书简介"
-// @Param   price    formData   string  false    "标价"
-// @Param   userid    formData   string  true    "用户id"
+// @Param	body	body  models.BookaddForm  true  {参数含义参考返回值}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /bookadd [post]
 func (this *BooksController) Bookadd() {
+	var ob  *models.BookaddForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 	model := models.Books{}
-	Uid := models.GetID()
-	model.Bookid   =  fmt.Sprintf("%d", Uid)
-	model.Bookname = this.GetString("bookname")
-	model.Author   = this.GetString("author")
-	model.Imagehead = this.GetString("imageback")
-	model.Imageback = this.GetString("imageback")
-	model.Imageurl  = this.GetString("imgurl")
-	model.Describe  = this.GetString("describe")
-	model.Price,_ = this.GetUint16("price")
-	model.Isbn  =  this.GetString("isbn")
-	model.Userid  =  this.GetString("userid")
+	id := models.GetID()
+	model.Bookid    =  fmt.Sprintf("%d", id)
+	model.Bookname  = ob.Bookname
+	model.Author    = ob.Author
+	model.Imagehead = ob.Imagehead
+	model.Imageback = ob.Imageback
+	model.Imageurl  = ob.Imageurl
+	model.Describe  = ob.Describe
+	model.Price  = ob.Price
+	model.Isbn   =  ob.Isbn
+	model.Userid = this.Userid
 	model.Depreciation = 0
 	model.State = 1
 	valid := validation.Validation{}
@@ -301,24 +295,23 @@ func (this *BooksController) Bookaddbycode() {
 // @Title   收藏人/书籍
 // @Summary  收藏人/书籍
 // @Description 收藏人/书籍
-// @Success 200  {<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/> "concern_type": "1:收藏书籍;2:收藏人",<br/> "created_at": "收藏时间" }
-// @Param   token       header     string   true   "token"
-// @Param   userid_from formData   string   true   "书主人编号/图书编号bookid"
-// @Param   concern_type   formData string  true   "1:收藏书籍;2:收藏人""
+// @Success 200  {<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/> "concern_type": "1:收藏书籍;2:收藏人",<br/> "created_at": "收藏时间" <br/>}
+// @Param   token   header   string   true   "token"
+// @Param	body	body     models.AddconcernForm  true  {参数含义参考返回值}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /addconcern [post]
 func (this *BooksController) Addconcern(){
-	c := models.Concern{}
-	if err := this.ParseForm(&c); err != nil {
-		this.Rsp(false, err.Error(),"")
-	}
-	err:=models.CheckConcern(&c)
-	if err!=nil{
-		this.Rsp(false, err.Error(),"")
+	var ob  *models.AddconcernForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if ob.UseridFrom==""||ob.ConcernType==""{
+		this.Rsp(false, "参数错误!","")
 	}
 	// 查询是否已已经收藏
+	c := models.Concern{}
 	c.UseridTo = this.Userid
+	c.ConcernType = ob.ConcernType
+	c.UseridFrom  = ob.UseridFrom
 	var conditions string =""
 	conditions+=" and userid_to='"+c.UseridTo+"'"
 	conditions+=" and userid_from='"+c.UseridFrom+"'"
@@ -358,25 +351,26 @@ func (this *BooksController) Addconcern(){
 // @Title    批量删除收藏
 // @Summary  批量删除收藏
 // @Description 批量删除收藏
-// @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   concernid formData   string  true   [编号1,编号2,编号3]
+// @Success 200  { <br/>"concernid": "收藏编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
+// @Param   token   header     string  true  "token"
+// @Param	body	body     models.DelbookconcernForm  true   "[{"concernid": "收藏1"},{"concernid": "收藏2"}]"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /delbookconcern [post]
 func (this *BooksController) Delbookconcern() {
-	userid   :=   this.Userid
-	concernid   :=   this.GetString("concernid")
-	var state []string
-	err:=json.Unmarshal([]byte(concernid),&state)
-	if userid=="" || concernid =="" || err != nil{
-		this.Rsp(false,"参数错误!","")
+	var ob  []*models.DelbookconcernForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if len(ob)<=0{
+		this.Rsp(false, "参数错误!","")
 	}
-	for _,v:= range state{
-		c,err:= models.GetConcernById(v)
+	fmt.Println(ob)
+	return
+	userid   :=   this.Userid
+	for _,v:= range ob{
+		c,err:= models.GetConcernById(v.Concernid)
 		if err == nil {
 			if c.UseridTo == userid{
-				models.DelConcernById(v)
+				models.DelConcernById(v.Concernid)
 			}
 		}else{
 			this.Rsp(false,"收藏不存在","")
@@ -390,14 +384,15 @@ func (this *BooksController) Delbookconcern() {
 // @Summary  收藏的图书列表
 // @Description 收藏的图书列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param   length    formData   int  false      "分页步长"
-// @Param   draw      formData   int  false      "请求页数"
+// @Param   token   header     string  true  "token"
+// @Param	body	body 	 models.ConcernBookListForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 500 服务器错误!
 // @router /concernbooklist [post]
 func (this *BooksController) ConcernBookList() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.ConcernBookListForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	var conditions string = " "
 	conditions+= " and userid_to ='"+this.Userid+"'"
 	conditions+=" and concern_type ='1' "
@@ -436,13 +431,14 @@ func (this *BooksController) ConcernBookList() {
 // @Description 收藏的图书列表
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   token       header     string  true  "token"
-// @Param   length    formData   int  false      "分页步长"
-// @Param   draw      formData   int  false      "请求页数"
+// @Param	body	body 	 models.ConcernBookListForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 500 服务器错误!
 // @router /concernuserlist [post]
 func (this *BooksController) ConcernUserList() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.ConcernBookListForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	var conditions string = " "
 	conditions+= " and userid_to ='"+this.Userid+"'"
 	conditions+=" and concern_type ='2' "

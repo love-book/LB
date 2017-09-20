@@ -22,7 +22,7 @@ type  Users struct {
 	Nickname  	string 	 `json:"nickname"`
 	Imgurl    	string 	 `json:"imgurl" `
 	Gender  	int64  	 `json:"gender"`
-	Age   		int32 	 `json:"age"`
+	Age   		int64 	 `json:"age"`
 	Telphone  	string   `json:"telphone"`
 	Password	string   `json:"password"`
 	Qq  		string   `json:"qq"`

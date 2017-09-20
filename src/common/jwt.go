@@ -19,7 +19,7 @@ var (
 )
 
 func SetToken(appid string) (string,error)  {
-	expireToken := time.Now().Add(time.Hour * 1).Unix()
+	expireToken := time.Now().Add(time.Hour * 24).Unix()
 	claim := Claims{
 		appid,
 		jwt.StandardClaims{
