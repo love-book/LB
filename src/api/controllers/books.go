@@ -134,7 +134,7 @@ func (this *BooksController) Bookupdate(){
 // @Summary  添加书籍
 // @Description 添加书籍
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"折旧",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
+// @Param   token   header     string  true  "token"
 // @Param	body	body  models.BookaddForm  true  {参数含义参考返回值}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!

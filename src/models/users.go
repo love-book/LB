@@ -249,10 +249,10 @@ func  GetLocationByID(openid string)(l map[string]interface{},err error){
 
 
 //根据openid获取附近的人
-func  GetUsersByLocaltion(openid string,geokey string,radius int64)(re []map[string]string,err error){
+func  GetUsersByLocaltion(openid string,geokey string,radius int64,count int)(re []map[string]string,err error){
 	rc := comm.Pool.Get()
 	defer rc.Close()
-	re,err = RadiusByMember(rc.Do("GEORADIUSBYMEMBER",geokey,openid,radius,"m","WITHDIST"))
+	re,err = RadiusByMember(rc.Do("GEORADIUSBYMEMBER",geokey,openid,radius,"m","WITHDIST","ASC","COUNT",count))
 	return
 }
 
@@ -292,5 +292,22 @@ func  AddLocationByID(openid string,lang float64,lat float64)(err error){
 	defer rc.Close()
 	v,err := rc.Do("GEOADD",comm.LocationGeo,lang,lat,openid)
 	fmt.Println(v)
+	return
+}
+
+
+//计算两个用户之间的距离
+func  GetUsersRadiusByMembers(geokey string,member1 string,member2 string)(radius string,err error){
+	rc := comm.Pool.Get()
+	defer rc.Close()
+	radius = GeoByMember(rc.Do("GEODIST",geokey,member1,member2,"m"))
+	return
+}
+func GeoByMember(result interface{}, err error) (radius string) {
+	values, err := redis.Bytes(result, err)
+	if err != nil {
+		return "0"
+	}
+	radius = string(values)
 	return
 }

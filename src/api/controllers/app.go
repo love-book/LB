@@ -71,7 +71,7 @@ func (this *AppController) Login()  {
 	pass:= models.Md5([]byte(password))
 	u,err:=models.GetUsersBypass([]string{telphone,pass})
 	if err==nil{
-		token,err := common.SetToken(u.Userid+"-"+u.Openid)
+		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.City)
 		if 0 == len(token) {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")
@@ -98,7 +98,7 @@ func (this *AppController) Accesstoken()  {
 	}
 	u,err:=models.GetUsersByOpenId([]string{ob.Openid})
 	if err==nil{
-		token,err := common.SetToken(u.Userid+"-"+u.Openid)
+		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.City)
 		if 0 == len(token) {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")

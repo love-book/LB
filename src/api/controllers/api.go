@@ -20,6 +20,8 @@ import (
 type ApiController struct {
 	Userid string
 	Openid string
+	Province string
+	City     string
 	beego.Controller
 }
 
@@ -33,13 +35,16 @@ func (this *ApiController) Prepare() {
 func (this *ApiController) SetUserId() {
 	auth := this.Ctx.Request.Header.Get("token")
 	if u,ok:=common.GetToken(auth);ok{
-		split :=strings.Split(u.Appid,"-")
-		this.Userid = split[0]
-		this.Openid = split[1]
-		fmt.Println(split)
+		split :=strings.Split(u.Appid,";")
+		this.Userid   = split[0]
+		this.Openid   = split[1]
+		this.Province = split[2]
+		this.City     = split[3]
 	}else{
-		this.Userid = ""
-		this.Openid = ""
+		this.Userid   =  ""
+		this.Openid   =  ""
+		this.Province =  ""
+		this.City     =  ""
 	}
 }
 
@@ -71,19 +76,6 @@ func (this *ApiController) Rsp(status bool, msg string,data interface{}) {
 	this.StopRun()
 }
 
-//interface 类型转换
-func GetType(e interface{})(v interface{}){
-	switch v := e.(type) {
-		case int:
-			fmt.Println("整型", v)
-			var s int
-			s = v
-			fmt.Println(s)
-		case string:
-			fmt.Println("字符串", v)
-	}
-   return
-}
 
 func (this *ApiController) Index() {
 	token  :=  beego.AppConfig.String("token") // 微信公众平台的Token
@@ -169,10 +161,6 @@ func (this *ApiController) Index() {
 					user.Logintime	=  time.Now().Unix()
 					user.Created_at =  time.Now().Unix()
 					user.Updated_at =  time.Now().Unix()
-					err := user.InsertValidation()
-					if err != nil {
-						mp.ReplyTextMsg(this.Ctx.ResponseWriter, err.Error())
-					}
 					_,err = models.AddUsers(&user)
 					if err != nil {
 						mp.ReplyTextMsg(this.Ctx.ResponseWriter, err.Error())

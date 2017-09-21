@@ -5,12 +5,10 @@ type AccesstokenForm struct {
 	Openid    string    `json:"openid"`
 }
 
-
 type LoginForm struct {
 	Telphone  string	`json:"telphone"`
 	Password  string	`json:"password"`
 }
-
 type UseraddForm struct {
 	Openid  	string	 `json:"openid"`
 	Wnickname  	string	 `json:"wnickname"`
@@ -32,10 +30,7 @@ type UseraddForm struct {
 	Lat  	    float64  `json:"lat"`
 }
 
-
-
 //book
-
 type BookaddForm struct {
 	Bookname     string `json:"bookname"`
 	Author       string	`json:"auhtor"`
@@ -136,6 +131,17 @@ type  AddLocaltionByIDForm  struct {
 
 // order
 type  OrderlistForm  struct {
-	Length int `json:"length"`
-	Draw   int `json:"draw"`
+	Length   int `json:"length"`
+	Draw     int `json:"draw"`
+	OrderState   string `json:"order_state"`
+	Isbn	     string `json:"isbn"`
+}
+
+type  OrderupdateForm  struct {
+	Orderid      string `json:"orderid"`
+	OrderState   string `json:"order_state"`
+}
+
+type  OrderdeleteForm  struct {
+	Orderid      string `json:"orderid"`
 }

@@ -166,3 +166,4 @@ func AddBookrack(b *Bookrack) (int64, error) {
 	id, err := o.Insert(bookrack)
 	return id, err
 }
+

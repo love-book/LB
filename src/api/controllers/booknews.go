@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	comm "common/conndatabase"
 	"models"
 	"fmt"
 	"time"
 	"encoding/json"
 	"github.com/astaxie/beego/orm"
 	"strconv"
+	"math"
 )
 
 type BooknewsController struct {
@@ -32,45 +32,49 @@ func (this *BooknewsController) Newslist() {
 	if ob.OrderState!="" {
 		conditions+= " and order_state = '"+ob.OrderState+"'"
 	}
-	books := models.BooknewsListData((draw-1) * length,length,conditions)
 	var resPonse []interface{}
-	book  := map[string]interface{}{}
-	JsonBook  := map[string]interface{}{}
-	JsonFrom  := map[string]interface{}{}
-	JsonTo  := map[string]interface{}{}
-	for _,val := range books{
-		book["newid"] =  val.Newid
-		book["userid_from"] =  val.Userid_from
-		book["userid_to"]   =  val.Userid_to
-		book["bookqid"]     =  val.Bookqid
-		book["order_state"] =  val.Order_state
-		book["order_type"] =  val.Order_type
-		book["create_time"] =  val.Create_time
-		book["update_time"] =  val.Update_time
-		Books := []byte(val.Books)
-		err := json.Unmarshal(Books, &JsonBook)
-		if err == nil{
-			book["books"] = &JsonBook
-		}else{
-			book["books"] = ""
+	books,count := models.BooknewsListDataBack((draw-1) * length,length,conditions)
+	if len(books) >= 1 {
+		for _,val := range books{
+			book  := map[string]interface{}{}
+			JsonBook  := map[string]interface{}{}
+			JsonFrom  := map[string]interface{}{}
+			JsonTo  := map[string]interface{}{}
+			book["newid"] =  val.Newid
+			book["userid_from"] =  val.Userid_from
+			book["userid_to"]   =  val.Userid_to
+			book["bookqid"]     =  val.Bookqid
+			book["order_state"] =  val.Order_state
+			book["order_type"] =  val.Order_type
+			book["create_time"] =  val.Create_time
+			book["update_time"] =  val.Update_time
+			Books := []byte(val.Books)
+			err := json.Unmarshal(Books, &JsonBook)
+			if err == nil{
+				book["books"] = &JsonBook
+			}else{
+				book["books"] = ""
+			}
+			UserFrom := []byte(val.User_from)
+			err = json.Unmarshal(UserFrom, &JsonFrom)
+			if err == nil{
+				book["user_from"] =  JsonFrom
+			}else{
+				book["user_from"] =  ""
+			}
+			UserTo := []byte(val.User_to)
+			err = json.Unmarshal(UserTo, &JsonTo)
+			if err == nil{
+				book["user_to"]   =  JsonTo
+			}else{
+				book["user_to"]   =  ""
+			}
+			resPonse = append(resPonse,&book)
 		}
-		UserFrom := []byte(val.User_from)
-		err = json.Unmarshal(UserFrom, &JsonFrom)
-		if err == nil{
-			book["user_from"] =  JsonFrom
-		}else{
-			book["user_from"] =  ""
-		}
-		UserTo := []byte(val.User_to)
-		err = json.Unmarshal(UserTo, &JsonTo)
-		if err == nil{
-			book["user_to"]   =  JsonTo
-		}else{
-			book["user_to"]   =  ""
-		}
-		resPonse = append(resPonse,&book)
 	}
-	this.Rsp(true, "获取成功!",&resPonse)
+	pageTotal:= math.Ceil(float64(count)/float64(length))
+	json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&resPonse}
+	this.Rsp(true, "获取成功!",&json)
 }
 
 
@@ -93,8 +97,9 @@ func (this *BooknewsController) Libraryrequest() {
 	if from =="" || bookqid=="" || to == ""{
 		this.Rsp(false, "参数错误!","")
 	}
-	//查询是否已经借过该书，该书状态未完成
-
+	if from == to{
+		this.Rsp(false, "你已经拥有当前图书!","")
+	}
 	//查询书主人用户书架
 	book,err:= models.GetUserBookRack(from,bookqid)
 	if err != nil {
@@ -196,7 +201,7 @@ func (this *BooknewsController) Libraryrequest() {
 // @Description 更改借书消息状态
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   token   header   string  true  "token"
-// @Param	body	body     models.LibraryrequestupdateForm 	true   "{ <br/>"newid":"消息编号",<br/>"order_state":"消息状态1:同意借书2:拒绝借书" <br/>}"
+// @Param	body	body     models.LibraryrequestupdateForm 	true   "{ <br/>"newid":"消息编号",<br/>"order_state":"消息状态1:同意借书(生成订单)2:拒绝借书;" <br/>}"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /libraryrequestupdate [post]
@@ -208,41 +213,47 @@ func (this *BooknewsController) Libraryrequestupdate() {
 	if  order_state == "" || newid ==""{
 		this.Rsp(false, "参数错误!","")
 	}
-	model := models.Booknews{}
-	Order := models.Bookorder{}
+	model,err := models.BooknewsInfo(" and newid="+newid+" and userid_from="+this.Userid)
+	if err!=nil{
+		this.Rsp(false, "无法更改当前消息!","")
+	}
+	OrderTo   := models.Bookorder{}
+	OrderFrom := models.Bookorder{}
 	model.Newid = newid
-	err := comm.Read(&model)
 	if err == nil {
 		t:= time.Now().Unix()
 		model.Update_time = t
-		Order.Order_state = model.Order_state
-		Order.Update_time = t
-		Order.Orderid =  newid
-		var flag bool = true
+		var flag bool = false
 		if  model.Order_state == 1{
-			Order.Userid_to   = model.Userid_to
-			Order.Userid_from = model.Userid_from
-			Order.Books   =  model.Books
-			Order.Bookqid =  model.Bookqid
-			Order.User_from = model.User_from
-			Order.User_to   = model.User_to
-			Order.Create_time = t
-			toInfo := Order
-			toInfo.Order_type = 2
-		}else{
-			flag = false
+			flag = true
+			OrderTo.Orderid     =  newid
+			OrderTo.Order_state =  model.Order_state
+			OrderTo.Update_time =  t
+			OrderTo.Userid_to   =  model.Userid_to
+			OrderTo.Userid_from =  model.Userid_from
+			OrderTo.Books       =  model.Books
+			OrderTo.Bookqid     =  model.Bookqid
+			OrderTo.User_from   =  model.User_from
+			OrderTo.User_to     =  model.User_to
+			OrderTo.Order_type  =  model.Order_type
+			OrderTo.Create_time =  t
+			OrderTo.Update_time =  t
+			OrderFrom  :=  OrderTo
+			OrderFrom.Userid_to   =  OrderTo.Userid_from
+			OrderFrom.Userid_from =  OrderTo.Userid_to
+			OrderFrom.User_from   =  OrderTo.User_to
+			OrderFrom.User_to     =  OrderTo.User_from
+			OrderFrom.Order_type  =  2
 		}
-		i64, err := strconv.ParseUint(order_state, 10, 8)
-		Order_state:=uint8(i64)
-		model.Order_state = Order_state
+		i64, err := strconv.ParseInt(order_state, 10, 64)
+		model.Order_state = i64
 		o := orm.NewOrm()
 		err = o.Begin()
 		if err == nil{
 			_,err =  o.Update(&model,"Order_state","Update_time")
 			if flag == true{
-				_,err = o.Insert(&Order)
-			}else{
-				_,err = o.Update(&Order,"Order_state","Update_time")
+				_,err = o.Insert(&OrderTo)
+				_,err = o.Insert(&OrderFrom)
 			}
 			err = o.Commit()
 			if err != nil{

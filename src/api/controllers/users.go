@@ -170,7 +170,7 @@ func (this *UsersController) GetUsersByLocaltion() {
 	u,err:=models.GetUsersByOpenId(openid)
 	if err == nil{
 		geokey :=u.Province+"-"+u.City
-		re,_= models.GetUsersByLocaltion(Openid,geokey,Radius)
+		re,_= models.GetUsersByLocaltion(Openid,geokey,Radius,30)
 	}
 	this.Rsp(true,"成功!",&re)
 }

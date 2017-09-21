@@ -347,7 +347,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003enewid:消息编号,\u003cbr/\u003eorder_state:消息状态1:同意借书2:拒绝借书 \u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003enewid:消息编号,\u003cbr/\u003eorder_state:消息状态1:同意借书(生成订单)2:拒绝借书; \u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.LibraryrequestupdateForm"
@@ -422,7 +422,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页\u003cbr/\u003e }",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长,\u003cbr/\u003elength:获取分页步长, \u003cbr/\u003eorder_state:状态0:待确认;1:已交换2:拒绝交换\u003cbr/\u003e }",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.OrderlistForm"
@@ -432,6 +432,84 @@
                 "responses": {
                     "200": {
                         "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"bookstate\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/bookorder/orderdelete": {
+            "post": {
+                "tags": [
+                    "bookorder"
+                ],
+                "summary": "删除交易记录",
+                "description": "删除交易记录",
+                "operationId": "BookorderController.删除交易记录",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003e orderid:订单编号 \u003cbr/\u003e }",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.OrderdeleteForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/bookorder/orderupdate": {
+            "post": {
+                "tags": [
+                    "bookorder"
+                ],
+                "summary": "更改交易记录状态",
+                "description": "更改交易记录状态",
+                "operationId": "BookorderController.更改交易记录状态",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003eorderid:订单编号, \u003cbr/\u003eorder_state:状态0:待确认;1:已交换2:拒绝交换\u003cbr/\u003e }",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.OrderupdateForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -1179,6 +1257,15 @@
                 }
             }
         },
+        "models.OrderdeleteForm": {
+            "title": "OrderdeleteForm",
+            "type": "object",
+            "properties": {
+                "orderid": {
+                    "type": "string"
+                }
+            }
+        },
         "models.OrderlistForm": {
             "title": "OrderlistForm",
             "type": "object",
@@ -1187,9 +1274,27 @@
                     "type": "integer",
                     "format": "int64"
                 },
+                "isbn": {
+                    "type": "string"
+                },
                 "length": {
                     "type": "integer",
                     "format": "int64"
+                },
+                "order_state": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OrderupdateForm": {
+            "title": "OrderupdateForm",
+            "type": "object",
+            "properties": {
+                "order_state": {
+                    "type": "string"
+                },
+                "orderid": {
+                    "type": "string"
                 }
             }
         },

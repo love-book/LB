@@ -258,7 +258,7 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{ <br/>newid:消息编号,<br/>order_state:消息状态1:同意借书2:拒绝借书 <br/>}'
+        description: '{ <br/>newid:消息编号,<br/>order_state:消息状态1:同意借书(生成订单)2:拒绝借书; <br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.LibraryrequestupdateForm'
@@ -316,7 +316,8 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{ <br/>length:获取分页步长, <br/>draw:当前页<br/> }'
+        description: '{ <br/>length:获取分页步长,<br/>length:获取分页步长, <br/>order_state:状态0:待确认;1:已交换2:拒绝交换<br/>
+          }'
         required: true
         schema:
           $ref: '#/definitions/models.OrderlistForm'
@@ -326,6 +327,67 @@ paths:
             "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
             "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
             <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /bookorder/orderdelete:
+    post:
+      tags:
+      - bookorder
+      summary: 删除交易记录
+      description: 删除交易记录
+      operationId: BookorderController.删除交易记录
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/> orderid:订单编号 <br/> }'
+        required: true
+        schema:
+          $ref: '#/definitions/models.OrderdeleteForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /bookorder/orderupdate:
+    post:
+      tags:
+      - bookorder
+      summary: 更改交易记录状态
+      description: 更改交易记录状态
+      operationId: BookorderController.更改交易记录状态
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/>orderid:订单编号, <br/>order_state:状态0:待确认;1:已交换2:拒绝交换<br/>
+          }'
+        required: true
+        schema:
+          $ref: '#/definitions/models.OrderupdateForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
             }'
         "500":
           description: 服务器错误!
@@ -899,6 +961,12 @@ definitions:
         type: string
       telphone:
         type: string
+  models.OrderdeleteForm:
+    title: OrderdeleteForm
+    type: object
+    properties:
+      orderid:
+        type: string
   models.OrderlistForm:
     title: OrderlistForm
     type: object
@@ -906,9 +974,21 @@ definitions:
       draw:
         type: integer
         format: int64
+      isbn:
+        type: string
       length:
         type: integer
         format: int64
+      order_state:
+        type: string
+  models.OrderupdateForm:
+    title: OrderupdateForm
+    type: object
+    properties:
+      order_state:
+        type: string
+      orderid:
+        type: string
   models.UseraddForm:
     title: UseraddForm
     type: object

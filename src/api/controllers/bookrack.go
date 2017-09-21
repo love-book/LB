@@ -40,30 +40,37 @@ func (this *BooksrackController) Bookracklist() {
 		conditions+= " and u.age >="+ageRange[0]
 		conditions+= " and u.age <="+ageRange[1]
 	}
-	if ob.Radius!="" {
-		u,err:= models.GetUsersById(this.Userid)
-		if err == nil{
-			radiusRange:=strings.Split(ob.Radius,"-")
-			radius,err:=strconv.ParseInt(radiusRange[1], 10, 64)
-			fmt.Println(radius)
-			var openstr string = ""
-			geokey :=u.Province+"-"+u.City
-			re,err := models.GetUsersByLocaltion(this.Openid,geokey,radius)
-			if err ==nil{
-				for _,v := range re{
+	var  openstr  string
+	geokey := this.Province+"-"+this.City
+	if ob.Radius != "" {
+		radiusRange:=strings.Split(ob.Radius,"-")
+		radius,_:=strconv.ParseInt(radiusRange[1], 10, 64)
+		re,err := models.GetUsersByLocaltion(this.Openid,geokey,radius,draw*length)
+		if err ==nil{
+			for k,v := range re{
+				if k >= ((draw-1)*length){
 					openstr+= "'"+v["member"]+"',"
 				}
-				openstr=strings.Trim(openstr,",")
 			}
-			if openstr!=""{
-				conditions+= " and u.openid in("+openstr+")"
-			}
+			openstr=strings.Trim(openstr,",")
+		}
+		if openstr != ""{
+			conditions+= " and u.openid in("+openstr+")"
 		}
 	}
-	conditions+= " and r.book_state = 1"
 	books,count := models.MyBooksrackList((draw-1)*length,length,conditions)
 	if len(books) < 1 {
 		books = []*models.BookrackList{}
+	}else{
+		for _,kv:= range books{
+			radius,err:=models.GetUsersRadiusByMembers(geokey,this.Openid,kv.Openid)
+			if err == nil{
+				rad:=strings.Split(radius,".")
+				kv.Radius = rad[0]+" m"
+			}else{
+				kv.Radius = "9 m"
+			}
+		}
 	}
 	pageTotal:= math.Ceil(float64(count)/float64(length))
 	json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&books}

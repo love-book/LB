@@ -15,8 +15,8 @@ type Booknews struct {
 	Books       string  `json:"books"   valid:"Required"`
 	User_from   string	`json:"user_from" valid:"Required"`
 	User_to     string	`json:"user_to"`
-	Order_type  uint8   `json:"order_state" valid:"Required;Range(1,2)"`
-	Order_state uint8   `json:"order_state" valid:"Required;Range(0,1,2,3)"`
+	Order_type  int64   `json:"order_state" valid:"Required;Range(1,2)"`
+	Order_state int64   `json:"order_state" valid:"Required;Range(0,1,2,3)"`
 	Create_time int64	`json:"create_time"`
 	Update_time int64	`json:"update_time"`
 }
@@ -29,7 +29,7 @@ type BooknewsList struct {
 	Books       string  `json:"books"`
 	User_from   string	`json:"user_from"`
 	User_to     string	`json:"user_to"`
-	Order_state uint8   `json:"order_state"`
+	Order_state int64   `json:"order_state"`
 	Create_time int64	`json:"create_time"`
 	Update_time int64	`json:"update_time"`
 }
@@ -58,3 +58,9 @@ func  BooknewsListDataBack(start int,length int,conditions string) (books []*Boo
 	return  books,total
 }
 
+func  BooknewsInfo(conditions string) (b *Booknews,err error){
+	var  rowsSql  = "select * from  lb_booknews  where true "+conditions+"  limit 1"
+	o := orm.NewOrm()
+	err = o.Raw(rowsSql).QueryRow(&b)
+	return
+}
