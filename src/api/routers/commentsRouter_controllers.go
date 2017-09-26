@@ -31,6 +31,14 @@ func init() {
 			MethodParams: param.Make(),
 			Params: nil})
 
+	beego.GlobalControllerRouter["api/controllers:AppController"] = append(beego.GlobalControllerRouter["api/controllers:AppController"],
+		beego.ControllerComments{
+			Method: "Getwxaccount",
+			Router: `/getwxaccount`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
 	beego.GlobalControllerRouter["api/controllers:BooknewsController"] = append(beego.GlobalControllerRouter["api/controllers:BooknewsController"],
 		beego.ControllerComments{
 			Method: "Newslist",
@@ -49,8 +57,16 @@ func init() {
 
 	beego.GlobalControllerRouter["api/controllers:BooknewsController"] = append(beego.GlobalControllerRouter["api/controllers:BooknewsController"],
 		beego.ControllerComments{
-			Method: "Libraryrequestupdate",
-			Router: `/libraryrequestupdate`,
+			Method: "Agreelibraryrequest",
+			Router: `/agreelibraryrequest`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["api/controllers:BooknewsController"] = append(beego.GlobalControllerRouter["api/controllers:BooknewsController"],
+		beego.ControllerComments{
+			Method: "Refuselibraryrequest",
+			Router: `/refuselibraryrequest`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
@@ -75,6 +91,14 @@ func init() {
 		beego.ControllerComments{
 			Method: "Orderdelete",
 			Router: `/orderdelete`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["api/controllers:BooksController"] = append(beego.GlobalControllerRouter["api/controllers:BooksController"],
+		beego.ControllerComments{
+			Method: "BookList",
+			Router: `/booklist`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
@@ -115,6 +139,14 @@ func init() {
 		beego.ControllerComments{
 			Method: "ConcernUserList",
 			Router: `/concernuserlist`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["api/controllers:BooksController"] = append(beego.GlobalControllerRouter["api/controllers:BooksController"],
+		beego.ControllerComments{
+			Method: "Getuserbookinfo",
+			Router: `/getuserbookinfo`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
@@ -171,6 +203,14 @@ func init() {
 		beego.ControllerComments{
 			Method: "Getbookinfo",
 			Router: `/getbookinfo`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["api/controllers:BooksrackController"] = append(beego.GlobalControllerRouter["api/controllers:BooksrackController"],
+		beego.ControllerComments{
+			Method: "Getuserinfo",
+			Router: `/getuserinfo`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})

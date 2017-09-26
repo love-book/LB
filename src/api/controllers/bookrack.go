@@ -22,7 +22,7 @@ type BooksrackController struct {
 // @Description  书城
 // @Success 200 {<br/>"bookqid":"图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离" <br/>}
 // @Param   token     header   string  true  "token"
-// @Param	body	  body 	models.BookracklistForm   true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围20-30",<br/>"radius":"方圆多少米范围内200-300-string"<br/>}"
+// @Param	body	  body 	models.BookracklistForm   true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围20-30",<br/>"radius":"方圆多少米范围内"<br/>}"
 // @Failure 500 服务器错误!
 // @router /bookracklist [post]
 func (this *BooksrackController) Bookracklist() {
@@ -41,7 +41,7 @@ func (this *BooksrackController) Bookracklist() {
 		conditions+= " and u.age <="+ageRange[1]
 	}
 	var  openstr  string
-	geokey := this.Province+"-"+this.City
+	geokey := this.Province
 	if ob.Radius != "" {
 		radiusRange:=strings.Split(ob.Radius,"-")
 		radius,_:=strconv.ParseInt(radiusRange[1], 10, 64)
@@ -214,33 +214,33 @@ func (this *BooksrackController) Bookrackaddbysn() {
 // @Summary  批量上架/下架/删除图书
 // @Description 批量上架/下架/删除图书
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
-// @Param   token     header     string  true  "token"
-// @Param	body	body  models.BookStateForm 	true "[<br/>{<br/>"bookqid":"图书编号",<br/>"book_state":"书架图书状态状态1:上架;2:下架;3:待补充,4:删除"<br/>},<br/> {<br/>"bookqid":"",<br/>"book_state":""<br/>} <br/>]"
+// @Param   token   header     string  true  "token"
+// @Param	body	body  models.BookStateForm 	true "{<br/>"bookqid":["1","2"],<br/>"book_state":"书架图书状态状态1:上架;2:下架;3:待补充,4:删除"<br/>}"
 // @Failure 100 错误提示信息!y
 // @Failure 500 服务器错误!
 // @router /bookrackupdate [post]
 func (this *BooksrackController) Bookrackupdate() {
-	var ob []*models.BookStateForm
+	var ob  *models.BookStateForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
-	if len(ob)<=0 {
+	if len(ob.Bookqid)<=0 {
 		this.Rsp(false,"参数错误!","")
 	}
-	for _,v:= range ob{
-		book,err:= models.GetBookById(v.Bookqid)
+	for _,v:= range ob.Bookqid{
+		book,err:= models.GetBookById(v)
 		if err == nil {
-			book.Bookqid = v.Bookqid
-			book.Book_state = v.Book_state
+			book.Bookqid = v
+			book.Book_state = ob.Book_state
 			if book.Is_borrow == "2"{
-				this.Rsp(false,"图书已借出,不能操作状态",v.Bookqid)
+				this.Rsp(false,"图书已借出,不能操作状态",v)
 			}
-			if  v.Book_state !="1"{
+			if  ob.Book_state !="1"{
 				book.Is_borrow =  "2"
 			}
 			book.Update_time = time.Now().Unix()
 			models.UpdateBookRackById(book)
 			this.Rsp(true,"操作成功!","")
 		}else{
-			this.Rsp(false,"当前图书不存在",v.Bookqid)
+			this.Rsp(false,"当前图书不存在",v)
 		}
 	}
 	this.Rsp(false,"未知错误","")
@@ -262,6 +262,9 @@ func (this *BooksrackController) Mybookrack() {
 	length := ob.Length
 	draw := ob.Draw
 	userid   :=  this.Userid
+	if ob.Userid !=""{
+		userid = ob.Userid
+	}
 	if userid =="" {
 		this.Rsp(false, "参数错误!","")
 	}
@@ -283,7 +286,7 @@ func (this *BooksrackController) Mybookrack() {
 // @Description 拥有此书的人
 // @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"openid": "oX8vKwueTHOC3wrUkm2eJBnm-m6A",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"wnickname": "微信昵称",<br/>"wimgurl": "微信头像",<br/>"nickname": "用户昵称",<br/>"imgurl": "用户头像",<br/>"gender": "性别1:男2:女0:保密",<br/>"age": "年龄",<br/>"telphone": "手机号",<br/>"password": "密码",<br/>"qq": "QQ号",<br/>"weibo": "微博号",<br/>"signature": "个性签名",<br/>"constellation": "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime": "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius": "距离"<br/>}
 // @Param   token       header     string  true  "token"
-// @Param	body	  body 	models.GetbookusersForm  true   "{ <br/>"length":"获取分页步长-string", <br/>"draw":"当前页-string",<br/> "bookid":"书编号string"<br/>}"
+// @Param	body	  body 	models.GetbookusersForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "bookid":"书编号"<br/>}"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /getbookusers [post]
@@ -330,6 +333,27 @@ func (this *BooksrackController) Getbookinfo() {
 }
 
 
+// @Title    查看用户信息
+// @Summary  查看用户信息
+// @Description 查看用户信息
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"concernid":"收藏编号",<br/>"userid_to":"收藏人id", <br/>"userid_from":"图书编号",<br/>"concern_type":"收藏类型1:图书2:人",<br/> "created_at":"收藏时间"<br/>}
+// @Param   token       header     string  true  "token"
+// @Param	body	body  models.GetuserinfoForm	true  "{<br/>"userid":"用户编号"<br/>}
+// @Failure 100 错误提示信息!
+// @Failure 500 服务器错误!
+// @router /getuserinfo [post]
+func (this *BooksrackController) Getuserinfo() {
+	var ob  *models.GetuserinfoForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	userid:= ob.Userid
+	if userid==""  {
+		this.Rsp(false, "参数错误!","")
+	}
+	var conditions string = " "
+	conditions+= " and u.userid ='"+userid+"'"
+	user := models.MyUserconcernInfo(conditions)
+	this.Rsp(true, "获取成功!",&user)
+}
 
 // @Title    上架记录
 // @Summary  上架记录

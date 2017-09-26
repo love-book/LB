@@ -18,7 +18,7 @@ type Bookrack struct {
 }
 
 
-type BookrackList struct {
+type BookrackInfo struct {
 	Bookqid      string  `json:"bookqid" orm:"pk;size(20);column(bookqid);"`
 	Userid       string  `json:"userid"`
 	Openid       string  `json:"openid"`
@@ -39,6 +39,8 @@ type BookrackList struct {
 	State        uint8	 `json:"state" `
 	Users
 	Radius     	 string	 `json:"radius"`
+	ImageList    []string	`json:"imagelist"`
+	ImageCount   string	 `json:"imagecount"`
 }
 
 
@@ -66,9 +68,59 @@ type BookconcernInfo struct {
 	ConcernType  string	 `json:"concern_type"`
 	CreatedAt    int64   `json:"created_at"`
 }
+
+type UserconcernInfo struct {
+	Concernid    string	 `json:"concernid"`
+	UseridTo     string  `json:"userid_to"`
+	UseridFrom   string  `json:"userid_from"`
+	ConcernType  string	 `json:"concern_type"`
+	CreatedAt    int64   `json:"created_at"`
+	Userid		string	 `json:"userid"`
+	Wnickname  	string	 `json:"wnickname"`
+	Wimgurl    	string 	 `json:"wimgurl"`
+	Nickname  	string 	 `json:"nickname"`
+	Imgurl    	string 	 `json:"imgurl" `
+	Gender  	int64  	 `json:"gender"`
+	Age   		int64 	 `json:"age"`
+	Qq  		string   `json:"qq"`
+	Weino  		string   `json:"weibo"`
+	Signature  	string   `json:"signature"`
+	Constellation string `json:"constellation"`
+	Province  	string   `json:"province"`
+	City  	    string   `json:"city"`
+	Address  	string   `json:"address"`
+	Logintime	int64  	 `json:"logintime"`
+	Created_at  int64  	 `json:"created_at"`
+	Updated_at  int64  	 `json:"updated_at"`
+}
+
 type BookExist struct {
 	Userid       string   `json:"userid"`
 	Bookid       string   `json:"bookid"`
+}
+
+
+type BookrackList struct {
+	Bookqid      string  `json:"bookqid" orm:"pk;size(20);column(bookqid);"`
+	Userid       string  `json:"userid"`
+	Openid       string  `json:"openid"`
+	Bookid       string  `json:"bookid"`
+	Book_state   string  `json:"book_state"`
+	Is_borrow    string  `json:"is_borrow"`
+	Create_time  int64   `json:"create_time"`
+	Update_time  int64   `json:"update_time"`
+	Bookname     string  `json:"bookname"`
+	Author       string	 `json:"auhtor""`
+	Imageurl     string	 `json:"imageurl"`
+	Imagehead    string	 `json:"imagehead"`
+	Imageback    string	 `json:"imageback"`
+	Isbn         string	 `json:"isbn"`
+	Depreciation uint8	 `json:"depreciation"`
+	Price        uint16	 `json:"price"`
+	Describe     string	 `json:"describe"`
+	State        uint8	 `json:"state" `
+	Users
+	Radius     	 string	 `json:"radius"`
 }
 
 
@@ -103,8 +155,14 @@ func  MyBookconcernInfo(conditions string) (book *BookconcernInfo){
 	return  book
 }
 
+func  MyUserconcernInfo(conditions string) (book *UserconcernInfo){
+	var  rowsSql  = "select c.*,u.* from  lb_users  as u  left  join lb_concern as c  on  c.userid_from = u.userid  where true "+conditions+"  limit 1"
+	o := orm.NewOrm()
+	o.Raw(rowsSql).QueryRow(&book)
+	return  book
+}
 //收藏图书信息
-func  MyBooksrackInfo(conditions string) (book *BookrackList){
+func  MyBooksrackInfo(conditions string) (book *BookrackInfo){
 	var  rowsSql  = "select r.*,b.*,u.* from  lb_bookrack as r inner  join lb_books  as b on r.bookid = b.bookid  inner  join lb_users as u on u.userid = r.userid  where true "+conditions+"  limit 1"
 	o := orm.NewOrm()
 	o.Raw(rowsSql).QueryRow(&book)
@@ -123,9 +181,9 @@ func GetBookById(bookqid string) (v *Bookrack, err error) {
 }
 
 //查询书主人用户书架
-func GetUserBookRack(uid string,bookqid string)(b *BookrackList,err error){
-	query:= []string{uid,bookqid}
-	sql:= "select * from lb_bookrack as r left join lb_books as b on r.bookid = b.bookid  where r.userid=? and r.bookqid=?  limit 1"
+func GetUserBookRack(bookqid string)(b *BookrackList,err error){
+	query:= []string{bookqid}
+	sql:= "select * from lb_bookrack as r left join lb_books as b on r.bookid = b.bookid  where  r.bookqid=?  limit 1"
 	RawSeter:=orm.NewOrm().Raw(sql,query)
 	if err = RawSeter.QueryRow(&b);err==nil{
 		return b,nil

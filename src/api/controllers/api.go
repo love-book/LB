@@ -21,7 +21,6 @@ type ApiController struct {
 	Userid string
 	Openid string
 	Province string
-	City     string
 	beego.Controller
 }
 
@@ -39,12 +38,10 @@ func (this *ApiController) SetUserId() {
 		this.Userid   = split[0]
 		this.Openid   = split[1]
 		this.Province = split[2]
-		this.City     = split[3]
 	}else{
 		this.Userid   =  ""
 		this.Openid   =  ""
 		this.Province =  ""
-		this.City     =  ""
 	}
 }
 
@@ -116,7 +113,7 @@ func (this *ApiController) Index() {
 					province:=l.Result.AddressComponent.Province
 					city:=l.Result.AddressComponent.City
 					//将用户的经纬度信息加入redis GEO
-					geoKey := province+"-"+city
+					geoKey := province
 					rc.Do("GEOADD",geoKey,mp.Request.Longitude,mp.Request.Latitude,mp.Request.FromUserName)
 					rc.Do("SETEX",mp.Request.FromUserName, 60*30,mp.Request.Longitude)
 					FromUserName := []string{mp.Request.FromUserName}

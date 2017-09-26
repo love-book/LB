@@ -26,6 +26,18 @@ paths:
           description: '{<br/> token}'
         "403":
           description: :openid is empty
+  /app/getwxaccount:
+    post:
+      tags:
+      - app
+      summary: 获取微信公众号信息
+      description: 获取微信公众号信息
+      operationId: AppController.获取微信公众号信息
+      responses:
+        "200":
+          description: '"{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}'
+        "403":
+          description: :openid is empty
   /app/login:
     post:
       tags:
@@ -128,6 +140,34 @@ paths:
             }'
         "500":
           description: 服务器错误!
+  /book/booklist:
+    post:
+      tags:
+      - book
+      summary: 获取图书列表
+      description: 获取图书列表
+      operationId: BooksController.获取图书列表
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> }'
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookListForm'
+      responses:
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
   /book/concernbooklist:
     post:
       tags:
@@ -199,7 +239,7 @@ paths:
         type: string
       - in: body
         name: body
-        description: '[{concernid: 收藏1},{concernid: 收藏2}]'
+        description: '{ concernid: [1,2] }'
         required: true
         schema:
           $ref: '#/definitions/models.DelbookconcernForm'
@@ -210,6 +250,68 @@ paths:
           description: '{ <br/>"concernid": "收藏编号",<br/> "userid": "用户id",<br/> "bookid":
             "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow":
             "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /book/getuserbookinfo:
+    post:
+      tags:
+      - book
+      summary: 查看用户一本书信息
+      description: 查看用户一本书信息
+      operationId: BooksController.查看用户一本书信息
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{<br/>bookqid:图书编号-string<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.GetuserbookinfoForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"bookid":
+            "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"concernid":"收藏编号",<br/>"userid_to":"收藏人id",
+            <br/>"userid_from":"图书编号",<br/>"concern_type":"收藏类型1:图书2:人",<br/> "created_at":"收藏时间"<br/>}'
+        "500":
+          description: 服务器错误!
+  /booknews/agreelibraryrequest:
+    post:
+      tags:
+      - booknews
+      summary: 同意借书请求
+      description: 同意借书请求
+      operationId: BooknewsController.同意借书请求
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/>newid:消息编号<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.AgreeLibraryrequestForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
             }'
         "500":
           description: 服务器错误!
@@ -228,10 +330,10 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{ <br/>from:书主人用户编号,<br/>bookqid:书主人书架图书唯一编号 <br/>}'
+        description: '{ <br/>bookqid:图书唯一编号,order_type:类型:1:别人借我的书;2:我借别人的书, <br/>order_state:状态0:借书请求;1:接受2:拒绝<br/>}'
         required: true
         schema:
-          $ref: '#/definitions/models.BookrackaddbysnForm'
+          $ref: '#/definitions/models.LibraryrequestForm'
       responses:
         "100":
           description: 错误提示信息!
@@ -241,36 +343,6 @@ paths:
             "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/>
             "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at":
             "上架时间",<br/>"updated_at":"信息修改时间"<br/> }'
-        "500":
-          description: 服务器错误!
-  /booknews/libraryrequestupdate:
-    post:
-      tags:
-      - booknews
-      summary: 更改借书请求状态
-      description: 更改借书消息状态
-      operationId: BooknewsController.更改借书请求状态
-      parameters:
-      - in: header
-        name: token
-        description: token
-        required: true
-        type: string
-      - in: body
-        name: body
-        description: '{ <br/>newid:消息编号,<br/>order_state:消息状态1:同意借书(生成订单)2:拒绝借书; <br/>}'
-        required: true
-        schema:
-          $ref: '#/definitions/models.LibraryrequestupdateForm'
-      responses:
-        "100":
-          description: 错误提示信息!
-        "200":
-          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
-            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
-            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
-            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
-            }'
         "500":
           description: 服务器错误!
   /booknews/newsList:
@@ -291,13 +363,43 @@ paths:
         description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> order_state:消息状态1:同意2:拒绝,3:完成，0：借书请求''<br/>}'
         required: true
         schema:
-          $ref: '#/definitions/models.ConcernBookListForm'
+          $ref: '#/definitions/models.NewslistForm'
       responses:
         "200":
           description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
             "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
             "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
             <br/>"describe": "图书简介",<br/> "bookstate": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /booknews/refuselibraryrequest:
+    post:
+      tags:
+      - booknews
+      summary: 拒绝借书请求
+      description: 拒绝借书请求
+      operationId: BooknewsController.拒绝借书请求
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/>newid:消息编号<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefuseLibraryrequestForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
             }'
         "500":
           description: 服务器错误!
@@ -463,7 +565,7 @@ paths:
       - in: body
         name: body
         description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> gender:性别1:男2:女0:保密,<br/>
-          age:年龄范围20-30,<br/>radius:方圆多少米范围内200-300-string<br/>}'
+          age:年龄范围20-30,<br/>radius:方圆多少米范围内<br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.BookracklistForm'
@@ -499,8 +601,7 @@ paths:
         type: string
       - in: body
         name: body
-        description: '[<br/>{<br/>bookqid:图书编号,<br/>book_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除<br/>},<br/>
-          {<br/>bookqid:,<br/>book_state:<br/>} <br/>]'
+        description: '{<br/>bookqid:[1,2],<br/>book_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除<br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.BookStateForm'
@@ -589,7 +690,7 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{ <br/>length:获取分页步长-string, <br/>draw:当前页-string,<br/> bookid:书编号string<br/>}'
+        description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> bookid:书编号<br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.GetbookusersForm'
@@ -648,6 +749,38 @@ paths:
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
             "距离" <br/>}'
+        "500":
+          description: 服务器错误!
+  /bookrack/getuserinfo:
+    post:
+      tags:
+      - bookrack
+      summary: 查看用户信息
+      description: 查看用户信息
+      operationId: BooksrackController.查看用户信息
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{<br/>userid:用户编号<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.GetuserinfoForm'
+      responses:
+        "100":
+          description: 错误提示信息!
+        "200":
+          description: '{<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"bookid":
+            "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time":
+            "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor":
+            "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback":
+            "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price":
+            "图书标价",<br/>"describe": "图书描述",<br/>"state": ''状态 0非锁定状态 1：锁定状态'',<br/>"concernid":"收藏编号",<br/>"userid_to":"收藏人id",
+            <br/>"userid_from":"图书编号",<br/>"concern_type":"收藏类型1:图书2:人",<br/> "created_at":"收藏时间"<br/>}'
         "500":
           description: 服务器错误!
   /bookrack/mybookrack:
@@ -727,7 +860,8 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{ <br/>radius:方圆多少米范围内, <br/>}'
+        description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> gender:性别1:男2:女0:保密,<br/>
+          age:年龄范围20-30,<br/>radius:方圆多少米范围内200-300<br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.GetUsersByLocaltionForm'
@@ -839,6 +973,28 @@ definitions:
         type: string
       userid_from:
         type: string
+  models.AgreeLibraryrequestForm:
+    title: AgreeLibraryrequestForm
+    type: object
+    properties:
+      newid:
+        type: string
+      qq:
+        type: string
+      telphone:
+        type: string
+      wechat:
+        type: string
+  models.BookListForm:
+    title: BookListForm
+    type: object
+    properties:
+      draw:
+        type: integer
+        format: int64
+      length:
+        type: integer
+        format: int64
   models.BookStateForm:
     title: BookStateForm
     type: object
@@ -846,7 +1002,9 @@ definitions:
       book_state:
         type: string
       bookqid:
-        type: string
+        type: array
+        items:
+          type: string
   models.BookaddForm:
     title: BookaddForm
     type: object
@@ -914,19 +1072,32 @@ definitions:
       length:
         type: integer
         format: int64
+      userid:
+        type: string
   models.DelbookconcernForm:
     title: DelbookconcernForm
     type: object
     properties:
       concernid:
-        type: string
+        type: array
+        items:
+          type: string
   models.GetUsersByLocaltionForm:
     title: GetUsersByLocaltionForm
     type: object
     properties:
-      radius:
+      age:
+        type: string
+      draw:
         type: integer
         format: int64
+      gender:
+        type: string
+      length:
+        type: integer
+        format: int64
+      radius:
+        type: string
   models.GetbookinfoForm:
     title: GetbookinfoForm
     type: object
@@ -945,13 +1116,29 @@ definitions:
       length:
         type: integer
         format: int64
-  models.LibraryrequestupdateForm:
-    title: LibraryrequestupdateForm
+  models.GetuserbookinfoForm:
+    title: GetuserbookinfoForm
     type: object
     properties:
-      newid:
+      bookqid:
         type: string
-      order_state:
+  models.GetuserinfoForm:
+    title: GetuserinfoForm
+    type: object
+    properties:
+      userid:
+        type: string
+  models.LibraryrequestForm:
+    title: LibraryrequestForm
+    type: object
+    properties:
+      bookqid:
+        type: string
+      qq:
+        type: string
+      telphone:
+        type: string
+      wechat:
         type: string
   models.LoginForm:
     title: LoginForm
@@ -960,6 +1147,18 @@ definitions:
       password:
         type: string
       telphone:
+        type: string
+  models.NewslistForm:
+    title: NewslistForm
+    type: object
+    properties:
+      draw:
+        type: integer
+        format: int64
+      length:
+        type: integer
+        format: int64
+      order_state:
         type: string
   models.OrderdeleteForm:
     title: OrderdeleteForm
@@ -988,6 +1187,12 @@ definitions:
       order_state:
         type: string
       orderid:
+        type: string
+  models.RefuseLibraryrequestForm:
+    title: RefuseLibraryrequestForm
+    type: object
+    properties:
+      newid:
         type: string
   models.UseraddForm:
     title: UseraddForm

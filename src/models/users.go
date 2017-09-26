@@ -26,6 +26,7 @@ type  Users struct {
 	Telphone  	string   `json:"telphone"`
 	Password	string   `json:"password"`
 	Qq  		string   `json:"qq"`
+	Wechat	    string   `json:"wechat"`
 	Weino  		string   `json:"weibo"`
 	Signature  	string   `json:"signature"`
 	Constellation string `json:"constellation"`
@@ -39,6 +40,29 @@ type  Users struct {
 	Updated_at  int64  	 `json:"updated_at"`
 }
 
+type  UsersList struct {
+	Userid		string	 `json:"userid" orm:"pk;size(20);column(userid);"`
+	Openid  	string	 `json:"openid"`
+	Wnickname  	string	 `json:"wnickname"`
+	Wimgurl    	string 	 `json:"wimgurl"`
+	Nickname  	string 	 `json:"nickname"`
+	Imgurl    	string 	 `json:"imgurl" `
+	Gender  	int64  	 `json:"gender"`
+	Age   		int64 	 `json:"age"`
+	Telphone  	string   `json:"telphone"`
+	Qq  		string   `json:"qq"`
+	Wechat	    string   `json:"wechat"`
+	Weino  		string   `json:"weibo"`
+	Signature  	string   `json:"signature"`
+	Constellation string `json:"constellation"`
+	Province  	string   `json:"province"`
+	City  	    string   `json:"city"`
+	Address  	string   `json:"address"`
+	Long  	    float64  `json:"long"`
+	Lat  	    float64  `json:"lat"`
+	Logintime	int64  	 `json:"logintime"`
+	Radius     	string	 `json:"radius"`
+}
 func init()  {
 	orm.RegisterModel(new(Users))
 }
@@ -310,4 +334,15 @@ func GeoByMember(result interface{}, err error) (radius string) {
 	}
 	radius = string(values)
 	return
+}
+
+
+
+func GetUserList(start int,length int,conditions string) (user []*UsersList,totalItem int){
+	var  countSql = "select count(*) from lb_users  where true "+conditions
+	var  rowsSql  = "select * from lb_users  where true "+conditions+"  order by logintime desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
+	o := orm.NewOrm()
+	o.Raw(countSql).QueryRow(&totalItem) //获取总条数
+	o.Raw(rowsSql).QueryRows(&user)
+	return  user,totalItem
 }

@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"github.com/astaxie/beego"
 	comm "common/conndatabase"
 	"models"
 	"time"
 	"fmt"
 	"common"
 	"encoding/json"
+	//mq "common/rabbitmq"
 )
 
 // App API
@@ -76,7 +78,7 @@ func (this *AppController) Login()  {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")
 		}else{
-			this.Rsp(true,"登录成功!",token)
+			this.Rsp(true,"登录成功!",&token)
 		}
 	}else{
 		this.Rsp(false,"不存在当前用户!","")
@@ -103,9 +105,22 @@ func (this *AppController) Accesstoken()  {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")
 		}else{
-			this.Rsp(true,"登录成功!",token)
+			this.Rsp(true,"登录成功!",&token)
 		}
 	}else{
 		this.Rsp(false,"不存在当前用户!","")
 	}
+}
+// openid       获取微信公众号信息
+// @Title       获取微信公众号信息
+// @Summary     获取微信公众号信息
+// @Description 获取微信公众号信息
+// @Success 200 "{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}
+// @Failure 403 :openid is empty
+// @router /getwxaccount [post]
+func (this *AppController) Getwxaccount()  {
+	appid  :=  beego.AppConfig.String("appid")  // 微信公众平台的AppID
+	secret :=  beego.AppConfig.String("secret")  // 微信公众平台的AppSecret
+	account := &map[string]string{"appid":appid,"secret":secret}
+	this.Rsp(true,"成功!",&account)
 }

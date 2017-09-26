@@ -39,6 +39,24 @@
                 }
             }
         },
+        "/app/getwxaccount": {
+            "post": {
+                "tags": [
+                    "app"
+                ],
+                "summary": "获取微信公众号信息",
+                "description": "获取微信公众号信息",
+                "operationId": "AppController.获取微信公众号信息",
+                "responses": {
+                    "200": {
+                        "description": "\"{\u003cbr/\u003e\"appid\":\"微信公众平台的AppID\"\u003cbr/\u003e,\"secret\":\"微信公众平台的AppSecret\"\u003cbr/\u003e}"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
+        },
         "/app/login": {
             "post": {
                 "tags": [
@@ -178,6 +196,42 @@
                 }
             }
         },
+        "/book/booklist": {
+            "post": {
+                "tags": [
+                    "book"
+                ],
+                "summary": "获取图书列表",
+                "description": "获取图书列表",
+                "operationId": "BooksController.获取图书列表",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e }",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BookListForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
         "/book/concernbooklist": {
             "post": {
                 "tags": [
@@ -269,7 +323,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "[{concernid: 收藏1},{concernid: 收藏2}]",
+                        "description": "{ concernid: [1,2] }",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.DelbookconcernForm"
@@ -282,6 +336,84 @@
                     },
                     "200": {
                         "description": "{ \u003cbr/\u003e\"concernid\": \"收藏编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充4:删除\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/book/getuserbookinfo": {
+            "post": {
+                "tags": [
+                    "book"
+                ],
+                "summary": "查看用户一本书信息",
+                "description": "查看用户一本书信息",
+                "operationId": "BooksController.查看用户一本书信息",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003ebookqid:图书编号-string\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.GetuserbookinfoForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e\"userid\": \"用户编号\",\u003cbr/\u003e\"bookid\": \"图书编号\",\u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充,4:删除\",\u003cbr/\u003e\"is_borrow\": \"状态1:可借阅;2:不可借;\",\u003cbr/\u003e\"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\": \"修改时间\",\u003cbr/\u003e\"bookname\": \"书名\",\u003cbr/\u003e\"auhtor\": \"作者\",\u003cbr/\u003e\"imageurl\": \"图书封面图\",\u003cbr/\u003e\"imagehead\": \"图书正面图\",\u003cbr/\u003e\"imageback\": \"图书背面图\",\u003cbr/\u003e\"isbn\": \"图书条形码\",\u003cbr/\u003e\"depreciation\": \"图书折旧\",\u003cbr/\u003e\"price\": \"图书标价\",\u003cbr/\u003e\"describe\": \"图书描述\",\u003cbr/\u003e\"state\": '状态 0非锁定状态 1：锁定状态',\u003cbr/\u003e\"concernid\":\"收藏编号\",\u003cbr/\u003e\"userid_to\":\"收藏人id\", \u003cbr/\u003e\"userid_from\":\"图书编号\",\u003cbr/\u003e\"concern_type\":\"收藏类型1:图书2:人\",\u003cbr/\u003e \"created_at\":\"收藏时间\"\u003cbr/\u003e}"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/booknews/agreelibraryrequest": {
+            "post": {
+                "tags": [
+                    "booknews"
+                ],
+                "summary": "同意借书请求",
+                "description": "同意借书请求",
+                "operationId": "BooknewsController.同意借书请求",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003enewid:消息编号\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AgreeLibraryrequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -308,10 +440,10 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003efrom:书主人用户编号,\u003cbr/\u003ebookqid:书主人书架图书唯一编号 \u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003ebookqid:图书唯一编号,order_type:类型:1:别人借我的书;2:我借别人的书, \u003cbr/\u003eorder_state:状态0:借书请求;1:接受2:拒绝\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BookrackaddbysnForm"
+                            "$ref": "#/definitions/models.LibraryrequestForm"
                         }
                     }
                 ],
@@ -321,45 +453,6 @@
                     },
                     "200": {
                         "description": "{\u003cbr/\u003e\"userid\":\"用户编号\",\"bookqid\":\"图书唯一编号\",\"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
-                    },
-                    "500": {
-                        "description": "服务器错误!"
-                    }
-                }
-            }
-        },
-        "/booknews/libraryrequestupdate": {
-            "post": {
-                "tags": [
-                    "booknews"
-                ],
-                "summary": "更改借书请求状态",
-                "description": "更改借书消息状态",
-                "operationId": "BooknewsController.更改借书请求状态",
-                "parameters": [
-                    {
-                        "in": "header",
-                        "name": "token",
-                        "description": "token",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "body",
-                        "name": "body",
-                        "description": "{ \u003cbr/\u003enewid:消息编号,\u003cbr/\u003eorder_state:消息状态1:同意借书(生成订单)2:拒绝借书; \u003cbr/\u003e}",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.LibraryrequestupdateForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "100": {
-                        "description": "错误提示信息!"
-                    },
-                    "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -389,13 +482,52 @@
                         "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e order_state:消息状态1:同意2:拒绝,3:完成，0：借书请求'\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConcernBookListForm"
+                            "$ref": "#/definitions/models.NewslistForm"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"bookstate\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/booknews/refuselibraryrequest": {
+            "post": {
+                "tags": [
+                    "booknews"
+                ],
+                "summary": "拒绝借书请求",
+                "description": "拒绝借书请求",
+                "operationId": "BooknewsController.拒绝借书请求",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003enewid:消息编号\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RefuseLibraryrequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -614,7 +746,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e gender:性别1:男2:女0:保密,\u003cbr/\u003e age:年龄范围20-30,\u003cbr/\u003eradius:方圆多少米范围内200-300-string\u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e gender:性别1:男2:女0:保密,\u003cbr/\u003e age:年龄范围20-30,\u003cbr/\u003eradius:方圆多少米范围内\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.BookracklistForm"
@@ -650,7 +782,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "[\u003cbr/\u003e{\u003cbr/\u003ebookqid:图书编号,\u003cbr/\u003ebook_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除\u003cbr/\u003e},\u003cbr/\u003e {\u003cbr/\u003ebookqid:,\u003cbr/\u003ebook_state:\u003cbr/\u003e} \u003cbr/\u003e]",
+                        "description": "{\u003cbr/\u003ebookqid:[1,2],\u003cbr/\u003ebook_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.BookStateForm"
@@ -767,7 +899,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003elength:获取分页步长-string, \u003cbr/\u003edraw:当前页-string,\u003cbr/\u003e bookid:书编号string\u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e bookid:书编号\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.GetbookusersForm"
@@ -819,6 +951,45 @@
                     },
                     "200": {
                         "description": "{\u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e\"userid\": \"用户编号\",\u003cbr/\u003e\"openid\": \"oX8vKwueTHOC3wrUkm2eJBnm-m6A\",\u003cbr/\u003e\"bookid\": \"图书编号\",\u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充,4:删除\",\u003cbr/\u003e\"is_borrow\": \"状态1:可借阅;2:不可借;\",\u003cbr/\u003e\"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\": \"修改时间\",\u003cbr/\u003e\"bookname\": \"书名\",\u003cbr/\u003e\"auhtor\": \"作者\",\u003cbr/\u003e\"imageurl\": \"图书封面图\",\u003cbr/\u003e\"imagehead\": \"图书正面图\",\u003cbr/\u003e\"imageback\": \"图书背面图\",\u003cbr/\u003e\"isbn\": \"图书条形码\",\u003cbr/\u003e\"depreciation\": \"图书折旧\",\u003cbr/\u003e\"price\": \"图书标价\",\u003cbr/\u003e\"describe\": \"图书描述\",\u003cbr/\u003e\"state\": '状态 0非锁定状态 1：锁定状态',\u003cbr/\u003e\"wnickname\": \"微信昵称\",\u003cbr/\u003e\"wimgurl\": \"微信头像\",\u003cbr/\u003e\"nickname\": \"用户昵称\",\u003cbr/\u003e\"imgurl\": \"用户头像\",\u003cbr/\u003e\"gender\": \"性别1:男2:女0:保密\",\u003cbr/\u003e\"age\": \"年龄\",\u003cbr/\u003e\"telphone\": \"手机号\",\u003cbr/\u003e\"password\": \"密码\",\u003cbr/\u003e\"qq\": \"QQ号\",\u003cbr/\u003e\"weibo\": \"微博号\",\u003cbr/\u003e\"signature\": \"个性签名\",\u003cbr/\u003e\"constellation\": \"星座\",\u003cbr/\u003e\"province\": \"北京市\",\u003cbr/\u003e\"city\": \"北京市\",\u003cbr/\u003e\"address\": \"地址\",\u003cbr/\u003e\"long\":\"经度\",\u003cbr/\u003e\"lat\":\"纬度\",\u003cbr/\u003e\"logintime\": \"用户最后登录时间\",\u003cbr/\u003e\"created_at\": \"用户注册时间\",\u003cbr/\u003e\"updated_at\": \"用户修改资料时间\",\u003cbr/\u003e\"radius\": \"距离\" \u003cbr/\u003e}"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/bookrack/getuserinfo": {
+            "post": {
+                "tags": [
+                    "bookrack"
+                ],
+                "summary": "查看用户信息",
+                "description": "查看用户信息",
+                "operationId": "BooksrackController.查看用户信息",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003euserid:用户编号\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.GetuserinfoForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!"
+                    },
+                    "200": {
+                        "description": "{\u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e\"userid\": \"用户编号\",\u003cbr/\u003e\"bookid\": \"图书编号\",\u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充,4:删除\",\u003cbr/\u003e\"is_borrow\": \"状态1:可借阅;2:不可借;\",\u003cbr/\u003e\"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\": \"修改时间\",\u003cbr/\u003e\"bookname\": \"书名\",\u003cbr/\u003e\"auhtor\": \"作者\",\u003cbr/\u003e\"imageurl\": \"图书封面图\",\u003cbr/\u003e\"imagehead\": \"图书正面图\",\u003cbr/\u003e\"imageback\": \"图书背面图\",\u003cbr/\u003e\"isbn\": \"图书条形码\",\u003cbr/\u003e\"depreciation\": \"图书折旧\",\u003cbr/\u003e\"price\": \"图书标价\",\u003cbr/\u003e\"describe\": \"图书描述\",\u003cbr/\u003e\"state\": '状态 0非锁定状态 1：锁定状态',\u003cbr/\u003e\"concernid\":\"收藏编号\",\u003cbr/\u003e\"userid_to\":\"收藏人id\", \u003cbr/\u003e\"userid_from\":\"图书编号\",\u003cbr/\u003e\"concern_type\":\"收藏类型1:图书2:人\",\u003cbr/\u003e \"created_at\":\"收藏时间\"\u003cbr/\u003e}"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -920,7 +1091,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003eradius:方圆多少米范围内, \u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e gender:性别1:男2:女0:保密,\u003cbr/\u003e age:年龄范围20-30,\u003cbr/\u003eradius:方圆多少米范围内200-300\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.GetUsersByLocaltionForm"
@@ -1079,6 +1250,38 @@
                 }
             }
         },
+        "models.AgreeLibraryrequestForm": {
+            "title": "AgreeLibraryrequestForm",
+            "type": "object",
+            "properties": {
+                "newid": {
+                    "type": "string"
+                },
+                "qq": {
+                    "type": "string"
+                },
+                "telphone": {
+                    "type": "string"
+                },
+                "wechat": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BookListForm": {
+            "title": "BookListForm",
+            "type": "object",
+            "properties": {
+                "draw": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "length": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
         "models.BookStateForm": {
             "title": "BookStateForm",
             "type": "object",
@@ -1087,7 +1290,10 @@
                     "type": "string"
                 },
                 "bookqid": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1185,6 +1391,9 @@
                 "length": {
                     "type": "integer",
                     "format": "int64"
+                },
+                "userid": {
+                    "type": "string"
                 }
             }
         },
@@ -1193,7 +1402,10 @@
             "type": "object",
             "properties": {
                 "concernid": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1201,9 +1413,22 @@
             "title": "GetUsersByLocaltionForm",
             "type": "object",
             "properties": {
-                "radius": {
+                "age": {
+                    "type": "string"
+                },
+                "draw": {
                     "type": "integer",
                     "format": "int64"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "length": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "radius": {
+                    "type": "string"
                 }
             }
         },
@@ -1233,14 +1458,38 @@
                 }
             }
         },
-        "models.LibraryrequestupdateForm": {
-            "title": "LibraryrequestupdateForm",
+        "models.GetuserbookinfoForm": {
+            "title": "GetuserbookinfoForm",
             "type": "object",
             "properties": {
-                "newid": {
+                "bookqid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.GetuserinfoForm": {
+            "title": "GetuserinfoForm",
+            "type": "object",
+            "properties": {
+                "userid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LibraryrequestForm": {
+            "title": "LibraryrequestForm",
+            "type": "object",
+            "properties": {
+                "bookqid": {
                     "type": "string"
                 },
-                "order_state": {
+                "qq": {
+                    "type": "string"
+                },
+                "telphone": {
+                    "type": "string"
+                },
+                "wechat": {
                     "type": "string"
                 }
             }
@@ -1253,6 +1502,23 @@
                     "type": "string"
                 },
                 "telphone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.NewslistForm": {
+            "title": "NewslistForm",
+            "type": "object",
+            "properties": {
+                "draw": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "length": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "order_state": {
                     "type": "string"
                 }
             }
@@ -1294,6 +1560,15 @@
                     "type": "string"
                 },
                 "orderid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.RefuseLibraryrequestForm": {
+            "title": "RefuseLibraryrequestForm",
+            "type": "object",
+            "properties": {
+                "newid": {
                     "type": "string"
                 }
             }

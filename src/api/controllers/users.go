@@ -5,6 +5,9 @@ import (
 	"models"
 	"time"
 	"encoding/json"
+	"strings"
+	"math"
+	"strconv"
 )
 
 // User API
@@ -153,26 +156,63 @@ func (this *UsersController) GetLocaltionByID() {
 // @Summary   获取附近的人
 // @Description 获取附近的人
 // @Param   token   header     string  true  "token"
-// @Param	body	body  models.GetUsersByLocaltionForm	true  "{ <br/>"radius":"方圆多少米范围内", <br/>}"
+// @Param	body	body  models.GetUsersByLocaltionForm	true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围20-30",<br/>"radius":"方圆多少米范围内200-300"<br/>}"
 // @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
 // @Failure 403 :openid is empty
 // @router /getusersbylocaltion [post]
 func (this *UsersController) GetUsersByLocaltion() {
-	var ob *models.GetUsersByLocaltionForm
+	var ob  *models.GetUsersByLocaltionForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw   := ob.Draw
 	Openid := this.Openid
-	Radius := ob.Radius
-	if Openid == "" ||Radius == 0{
+	if Openid == "" {
 		this.Rsp(false,"提交参数错误!","")
 	}
-	var re  []map[string]string
-	openid := []string{Openid}
-	u,err:=models.GetUsersByOpenId(openid)
-	if err == nil{
-		geokey :=u.Province+"-"+u.City
-		re,_= models.GetUsersByLocaltion(Openid,geokey,Radius,30)
+	var conditions string = " "
+	if ob.Gender!=""{
+		conditions+= " and gender ="+ob.Gender
 	}
-	this.Rsp(true,"成功!",&re)
+	if ob.Age !="" {
+		ageRange:=strings.Split(ob.Age,"-")
+		conditions+= " and u.age >="+ageRange[0]
+		conditions+= " and u.age <="+ageRange[1]
+	}
+	var  openstr  string
+	geokey := this.Province
+	if ob.Radius != "" {
+		radiusRange:=strings.Split(ob.Radius,"-")
+		radius,_:=strconv.ParseInt(radiusRange[1], 10, 64)
+		re,err := models.GetUsersByLocaltion(this.Openid,geokey,radius,draw*length)
+		if err ==nil{
+			for k,v := range re{
+				if k >= ((draw-1)*length){
+					openstr+= "'"+v["member"]+"',"
+				}
+			}
+			openstr=strings.Trim(openstr,",")
+		}
+		if openstr != ""{
+			conditions+= " and openid in("+openstr+")"
+		}
+	}
+	users,count := models.GetUserList((draw-1)*length,length,conditions)
+	if len(users)<1 {
+		users = []*models.UsersList{}
+	}else{
+		for _,kv:= range users{
+			radius,err:=models.GetUsersRadiusByMembers(this.Province,this.Openid,kv.Openid)
+			if err == nil{
+				rad:=strings.Split(radius,".")
+				kv.Radius = rad[0]+" m"
+			}else{
+				kv.Radius = "9 m"
+			}
+		}
+	}
+	pageTotal:= math.Ceil(float64(count)/float64(length))
+	json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&users}
+	this.Rsp(true, "获取成功!",&json)
 }
 
 

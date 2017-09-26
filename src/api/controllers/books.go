@@ -17,38 +17,21 @@ type BooksController struct {
 	ApiController
 }
 
-// Title 获取图书列表
-// Summary  获取图书列表
-// Description 获取图书列表
-// Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// Param   length    formData   int  false      "分页步长"
-// Param   draw      formData   int  false      "请求页数"
-// Param   bookname  formData   string  false   "书名"
-// Param   author    formData   string  false   "作者"
-// Param   bookid    formData   string  false   "图书编号"
-// Param   isbn     formData   string  false  "图书条形码"
-// Param   state    formData   string  false    "状态1:上架;2:下架;3:待补充"
-// Failure 500 服务器错误!
-// router /booklist [post]
+// @Title 获取图书列表
+// @Summary  获取图书列表
+// @Description 获取图书列表
+// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token   header     string  true  "token"
+// @Param	body	 body 	models.BookListForm   true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> }"
+// @Failure 500 服务器错误!
+// @router /booklist [post]
 func (this *BooksController) BookList() {
-	length, _ := this.GetInt("length",10) //获取分页步长
-	draw, _ := this.GetInt("draw",1) //获取请求次数
+	var ob  *models.BookListForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	length := ob.Length
+	draw := ob.Draw
 	var conditions string = " "
-	if v := this.GetString("bookid");v != ""{
-		conditions+= " and bookid ='"+v+"'"
-	}
-	if v := this.GetString("bookname");v != ""{
-		conditions+= " and bookname ="+v
-	}
-	if v := this.GetString("author");v !="" {
-		conditions+= " and author = "+v
-	}
-	if v := this.GetString("isbn");v !="" {
-		conditions+= " and isbn = "+v
-	}
-	if v := this.GetString("state");v !="" {
-		conditions+= " and state = "+v
-	}
+	conditions+= " and state = 1"
 	/*
 	if starttime := this.GetString("starttime");starttime !="" {
 		tm1, _ := time.Parse("01/02/2006", starttime)
@@ -61,8 +44,10 @@ func (this *BooksController) BookList() {
 		starttime = fmt.Sprintf("%d",tm1)
 		conditions+= " and created_at  bettwen "+starttime+" and "+endtime
 	}*/
-	books :=models.GetBookList((draw-1) * length,length,conditions)
-	this.Rsp(true, "获取成功!",&books)
+	books,count :=models.GetBookListBack((draw-1) * length,length,conditions)
+	pageTotal:= math.Ceil(float64(count)/float64(length))
+	json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&books}
+	this.Rsp(true, "获取成功!",&json)
 }
 
 
@@ -353,24 +338,22 @@ func (this *BooksController) Addconcern(){
 // @Description 批量删除收藏
 // @Success 200  { <br/>"concernid": "收藏编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
 // @Param   token   header     string  true  "token"
-// @Param	body	body     models.DelbookconcernForm  true   "[{"concernid": "收藏1"},{"concernid": "收藏2"}]"
+// @Param	body	body     models.DelbookconcernForm  true   "{ "concernid": ["1","2"] }"
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /delbookconcern [post]
 func (this *BooksController) Delbookconcern() {
-	var ob  []*models.DelbookconcernForm
+	var ob   *models.DelbookconcernForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
-	if len(ob)<=0{
+	if len(ob.Concernid)<=0{
 		this.Rsp(false, "参数错误!","")
 	}
-	fmt.Println(ob)
-	return
 	userid   :=   this.Userid
-	for _,v:= range ob{
-		c,err:= models.GetConcernById(v.Concernid)
+	for _,v:= range ob.Concernid{
+		c,err:= models.GetConcernById(v)
 		if err == nil {
 			if c.UseridTo == userid{
-				models.DelConcernById(v.Concernid)
+				models.DelConcernById(v)
 			}
 		}else{
 			this.Rsp(false,"收藏不存在","")
@@ -435,22 +418,22 @@ func (this *BooksController) ConcernBookList() {
 // @Failure 500 服务器错误!
 // @router /concernuserlist [post]
 func (this *BooksController) ConcernUserList() {
-	var ob  *models.ConcernBookListForm
+	var ob *models.ConcernBookListForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 	length := ob.Length
 	draw := ob.Draw
 	var conditions string = " "
-	conditions+= " and userid_to ='"+this.Userid+"'"
-	conditions+=" and concern_type ='2' "
-	lists,count := models.GetConcernList((draw-1)*length,length,conditions)
-	pageTotal:= math.Ceil(float64(count)/float64(length))
+	conditions += " and userid_to ='" + this.Userid + "'"
+	conditions += " and concern_type ='2' "
+	lists, count := models.GetConcernList((draw-1)*length, length, conditions)
+	pageTotal := math.Ceil(float64(count) / float64(length))
 	if len(lists) < 1 {
 		lists = []*models.Concern{}
-		json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&lists}
-		this.Rsp(true, "获取成功!",&json)
-	}else{
+		json := map[string]interface{}{"pageTotal": pageTotal, "draw": draw, "data": &lists}
+		this.Rsp(true, "获取成功!", &json)
+	} else {
 		var resPonse []interface{}
-		for _,v:= range lists{
+		for _, v := range lists {
 			concerns := map[string]interface{}{}
 			b := map[string]interface{}{}
 			concerns["concernid"] = v.Concernid
@@ -458,19 +441,54 @@ func (this *BooksController) ConcernUserList() {
 			concerns["userid_from"] = v.UseridFrom
 			concerns["concern_type"] = v.ConcernType
 			concerns["created_at"] = v.CreatedAt
-			err:=json.Unmarshal([]byte(v.Books),&b)
-			if err == nil{
+			err := json.Unmarshal([]byte(v.Books), &b)
+			if err == nil {
 				concerns["books"] = &b
 				//根据用户编号获取其书架最新的三本书
-				b:=models.BooksrackList(0,3," and u.userid ='"+v.UseridFrom+"'")
+				b := models.BooksrackList(0, 3, " and u.userid ='"+v.UseridFrom+"'")
 				concerns["booksList"] = &b
-			}else{
+			} else {
 				concerns["books"] = ""
-				concerns["booksList"] =""
+				concerns["booksList"] = ""
 			}
-			resPonse = append(resPonse,&concerns)
+			resPonse = append(resPonse, &concerns)
 		}
-		json := map[string]interface{}{"pageTotal":pageTotal,"draw":draw,"data":&resPonse}
-		this.Rsp(true, "获取成功!",&json)
+		json := map[string]interface{}{"pageTotal": pageTotal, "draw": draw, "data": &resPonse}
+		this.Rsp(true, "获取成功!", &json)
 	}
 }
+// @Title    查看用户一本书信息
+// @Summary  查看用户一本书信息
+// @Description 查看用户一本书信息
+// @Success 200 {<br/>"bookqid": "图书唯一编号",<br/>"userid": "用户编号",<br/>"bookid": "图书编号",<br/>"book_state": "状态1:上架;2:下架;3:待补充,4:删除",<br/>"is_borrow": "状态1:可借阅;2:不可借;",<br/>"create_time": "上架时间",<br/>"update_time": "修改时间",<br/>"bookname": "书名",<br/>"auhtor": "作者",<br/>"imageurl": "图书封面图",<br/>"imagehead": "图书正面图",<br/>"imageback": "图书背面图",<br/>"isbn": "图书条形码",<br/>"depreciation": "图书折旧",<br/>"price": "图书标价",<br/>"describe": "图书描述",<br/>"state": '状态 0非锁定状态 1：锁定状态',<br/>"concernid":"收藏编号",<br/>"userid_to":"收藏人id", <br/>"userid_from":"图书编号",<br/>"concern_type":"收藏类型1:图书2:人",<br/> "created_at":"收藏时间"<br/>}
+// @Param   token       header     string  true  "token"
+// @Param	body	body  models.GetuserbookinfoForm	true  "{<br/>"bookqid":"图书编号-string"<br/>}
+// @Failure 100 错误提示信息!
+// @Failure 500 服务器错误!
+// @router /getuserbookinfo [post]
+func (this *BooksController) Getuserbookinfo() {
+		var ob  *models.GetuserbookinfoForm
+		json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	    bookqid:= ob.Bookqid
+		if bookqid==""  {
+			this.Rsp(false, "参数错误!","")
+		}
+		var conditions string = " "
+		conditions+= " and r.bookqid ='"+bookqid+"'"
+		book := models.MyBooksrackInfo(conditions)
+	    if book.Imageurl!=""{
+			book.ImageList = append(book.ImageList,book.Imageurl)
+			book.ImageCount = "1"
+		}
+	   if book.Imagehead!=""{
+		    book.ImageList = append(book.ImageList,book.Imagehead)
+		    book.ImageCount = "2"
+		}
+		if book.Imageback!=""{
+			book.ImageList  = append(book.ImageList,book.Imageback)
+			book.ImageCount = "3"
+		}
+		this.Rsp(true, "获取成功!",&book)
+}
+
+
