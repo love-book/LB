@@ -11,8 +11,8 @@ type Booknews struct {
 	Newid       string  `json:"newid" valid:"Required" orm:"pk;size(20);column(newid);"`
 	Userid_from	string	`json:"userid_from" valid:"Required"`
 	Userid_to	string	`json:"userid_to" valid:"Required"`
-	Bookqid	    string	`json:"bookqid" valid:"Required"`
-	Books       string  `json:"books"   valid:"Required"`
+	Book_from   string  `json:"book_from"`
+	Book_to     string  `json:"book_to"`
 	User_from   string	`json:"user_from" valid:"Required"`
 	User_to     string	`json:"user_to"`
 	Order_type  int64   `json:"order_state" valid:"Required;Range(1,2)"`
@@ -25,8 +25,8 @@ type BooknewsList struct {
 	Newid       string  `json:"newid" orm:"pk;size(20);column(newid);"`
 	Userid_from	string	`json:"userid_from"`
 	Userid_to	string	`json:"userid_to"`
-	Bookqid	    string	`json:"bookqid"`
-	Books       string  `json:"books"`
+	Book_from   string  `json:"book_from"`
+	Book_to     string  `json:"book_to"`
 	User_from   string	`json:"user_from"`
 	User_to     string	`json:"user_to"`
 	Order_state int64   `json:"order_state"`

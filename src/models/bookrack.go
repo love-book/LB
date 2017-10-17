@@ -28,7 +28,7 @@ type BookrackInfo struct {
 	Create_time  int64   `json:"create_time"`
 	Update_time  int64   `json:"update_time"`
 	Bookname     string  `json:"bookname"`
-	Author       string	 `json:"auhtor""`
+	Author       string	 `json:"author""`
 	Imageurl     string	 `json:"imageurl"`
 	Imagehead    string	 `json:"imagehead"`
 	Imageback    string	 `json:"imageback"`
@@ -53,7 +53,7 @@ type BookconcernInfo struct {
 	Create_time  int64   `json:"create_time"`
 	Update_time  int64   `json:"update_time"`
 	Bookname     string  `json:"bookname"`
-	Author       string	 `json:"auhtor""`
+	Author       string	 `json:"author""`
 	Imageurl     string	 `json:"imageurl"`
 	Imagehead    string	 `json:"imagehead"`
 	Imageback    string	 `json:"imageback"`
@@ -110,7 +110,7 @@ type BookrackList struct {
 	Create_time  int64   `json:"create_time"`
 	Update_time  int64   `json:"update_time"`
 	Bookname     string  `json:"bookname"`
-	Author       string	 `json:"auhtor""`
+	Author       string	 `json:"author""`
 	Imageurl     string	 `json:"imageurl"`
 	Imagehead    string	 `json:"imagehead"`
 	Imageback    string	 `json:"imageback"`
@@ -123,6 +123,23 @@ type BookrackList struct {
 	Radius     	 string	 `json:"radius"`
 }
 
+type UserBookrackList struct {
+	Bookqid      string  `json:"bookqid"`
+	Userid       string  `json:"userid"`
+	Bookid       string  `json:"bookid"`
+	Book_state   string  `json:"book_state"`
+	Is_borrow    string  `json:"is_borrow"`
+	Create_time  int64   `json:"create_time"`
+	Update_time  int64   `json:"update_time"`
+	Bookname     string  `json:"bookname"`
+	Author       string	 `json:"author""`
+	Imageurl     string	 `json:"imageurl"`
+	Isbn         string	 `json:"isbn"`
+	Depreciation uint8	 `json:"depreciation"`
+	Price        uint16	 `json:"price"`
+	Describe     string	 `json:"describe"`
+	State        uint8	 `json:"state" `
+}
 
 func (b *Bookrack) TableName() string {
 	return beego.AppConfig.String("table_bookrack")
@@ -132,7 +149,7 @@ func init()  {
 	orm.RegisterModel(new(Bookrack))
 }
 
-func  BooksrackList(start int,length int,conditions string) (books []*BookrackList){
+func  UserBooksrackList(start int,length int,conditions string) (books []*UserBookrackList){
     var  rowsSql  = "select r.*,b.*,u.openid,u.nickname,u.imgurl,u.gender,u.age from  lb_bookrack as r left join lb_books  as b on r.bookid = b.bookid  left join lb_users as u on u.userid = r.userid  where true "+conditions+"  order by r.create_time desc  limit " + strconv.Itoa(start) + "," + strconv.Itoa(length)
 	o := orm.NewOrm()
 	o.Raw(rowsSql).QueryRows(&books)
@@ -183,7 +200,7 @@ func GetBookById(bookqid string) (v *Bookrack, err error) {
 //查询书主人用户书架
 func GetUserBookRack(bookqid string)(b *BookrackList,err error){
 	query:= []string{bookqid}
-	sql:= "select * from lb_bookrack as r left join lb_books as b on r.bookid = b.bookid  where  r.bookqid=?  limit 1"
+	sql:= "select *,r.userid as userid from lb_bookrack as r left join lb_books as b on r.bookid = b.bookid  where  r.bookqid=?  limit 1"
 	RawSeter:=orm.NewOrm().Raw(sql,query)
 	if err = RawSeter.QueryRow(&b);err==nil{
 		return b,nil
@@ -209,6 +226,12 @@ func UpdateBookRackById(m *Bookrack) (err error) {
 		fmt.Println("Number of records updated in database:", num)
 	}
 	return
+}
+
+func DelBookRackById(id string) (int64, error) {
+	o := orm.NewOrm()
+	status, err := o.Delete(&Bookrack{Bookqid: id})
+	return status, err
 }
 
 func AddBookrack(b *Bookrack) (int64, error) {

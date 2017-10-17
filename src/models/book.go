@@ -12,7 +12,7 @@ import(
 type Books struct {
 	Bookid       string `json:"bookid" valid:"Required" orm:"pk;size(20);column(bookid);"`
 	Bookname     string `json:"bookname" valid:"Required"`
-	Author       string	`json:"auhtor" valid:"Required"`
+	Author       string	`json:"author" valid:"Required"`
 	Imageurl     string	`json:"imageurl"`
 	Imagehead    string	`json:"imagehead"`
 	Imageback    string	`json:"imageback"`

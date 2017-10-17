@@ -10,16 +10,24 @@ import (
 	"log"
 )
 
-type Consum struct {
+
+type Consumer struct {
+	conn    *amqp.Connection
+	channel *amqp.Channel
+	tag     string
+	done    chan error
 	Exchange     string
 	ExchangeType string
 	Queue        string
 	BindingKey   string
 	ConsumerTag  string
+	Body         []byte
+	HandlerTag   string
+	HandlerRegister  *HandlerRegister
 }
 
-func (this *Consum)Sub() {
-	c, err := NewConsumer(uri, this.Exchange, this.ExchangeType, this.Queue, this.BindingKey, this.ConsumerTag)
+func (this *Consumer)Sub() {
+	c, err := NewConsumer(uri, this)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -39,21 +47,17 @@ func (this *Consum)Sub() {
 	}()
 }
 
-
-type Consumer struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	tag     string
-	done    chan error
-}
-
-func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (*Consumer, error) {
-	c := &Consumer{
-		conn:    nil,
-		channel: nil,
-		tag:     ctag,
-		done:    make(chan error),
-	}
+func NewConsumer(amqpURI string,c *Consumer) (*Consumer, error) {
+	// exchange, exchangeType, queueName, key, ctag
+	exchange:= c.Exchange
+	exchangeType:=c.ExchangeType
+	queueName:= c.Exchange
+	key := c.Exchange
+	ctag := c.Exchange
+	c.conn = nil
+	c.channel = nil
+	c.tag = ctag
+	c.done = make(chan error)
 
 	var err error
 
@@ -126,7 +130,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 		return nil, fmt.Errorf("Queue Consume: %s", err)
 	}
 
-	go handle(deliveries, c.done)
+	go handle(deliveries, c)
 
 	return c, nil
 }
@@ -147,36 +151,22 @@ func (c *Consumer) Shutdown() error {
 	return <-c.done
 }
 
-func handle(deliveries <-chan amqp.Delivery, done chan error) {
+func handle(deliveries <-chan amqp.Delivery,c *Consumer) {
 	for d := range deliveries {
-		log.Printf(
-			"got %dB delivery: [%v] %q",
-			len(d.Body),
-			d.DeliveryTag,
-			d.Body,
-		)
-        fmt.Println(d.ConsumerTag)
-		Delivery:=&Delivery{}
-		Delivery.DeliveryTag = d.DeliveryTag
-		Delivery.Body=d.Body
-		Delivery.HandlerRegister = CreateHandlerRegister()
-		Register(Delivery)
-		Do(Delivery)
+		c.HandlerTag = d.ConsumerTag
+		c.Body =d.Body
+		Do(c)
 		d.Ack(false)
 	}
 	log.Printf("handle: deliveries channel closed")
-	done <- nil
-}
-type Delivery struct{
-	DeliveryTag  uint64
-	Body         []byte
-	HandlerRegister  *HandlerRegister
+	c.done <- nil
 }
 
-func Do(s *Delivery){
-	err, handles := s.HandlerRegister.Get(555)
+
+func Do(s *Consumer){
+	err, handles := s.HandlerRegister.Get(s.HandlerTag)
 	if err != nil {
-		log.Printf("handle: Delivery")
+		log.Println(err)
 	}
 	for _, v := range handles {
 		go v.Run(s)

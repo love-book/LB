@@ -10,10 +10,10 @@ import(
 type Bookorder struct {
 	Orderid     string `json:"newid" valid:"Required" orm:"pk;size(20);column(orderid);"`
 	Userid_from	string	`json:"userid_from" valid:"Required"`
-	Userid_to	string	`json:"userid_to" valid:"Required"`
-	Bookqid	    string	`json:"bookqid" valid:"Required"`
-	Books       string  `json:"books"  valid:"Required"`
-	User_from   string	`json:"user_from" valid:"Required"`
+	Userid_to	string	`json:"userid_to"  valid:"Required"`
+	Book_from   string  `json:"book_from"  valid:"Required"`
+	Book_to     string  `json:"book_to"    valid:"Required"`
+	User_from   string	`json:"user_from"  valid:"Required"`
 	User_to     string	`json:"user_to"`
 	Order_type  int64   `json:"order_state" valid:"Required;Range(1,2)"`
 	Order_state int64   `json:"order_state" valid:"Required;Range(1,2,3)"`

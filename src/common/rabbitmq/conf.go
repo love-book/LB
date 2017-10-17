@@ -13,44 +13,90 @@ var (
 	uri = "amqp://"+mquser+":"+mqpass+"@"+mqhost+":"+mqport+"/"+mqvhost
 )
 
+
 func Push(key string,body string){
-	Exchange:=beego.AppConfig.String(key+"::Exchange")
-	ExchangeType:=beego.AppConfig.String(key+"::ExchangeType")
+	Exchange := key
+	ExchangeType := ExchangeMap[key]
 	Producer:= Producer{
 		Exchange,
 		ExchangeType,
 		Exchange,
 		Exchange,
 		body,
-		true}
+		true,
+	}
 	Producer.Push()
 }
 
+
+
 func init(){
-	subkasoly()
-	subgo()
+	actionConcernNotice()
+	actionLibraryrequest()
+	actionAgreelibraryrequest()
 }
 
-func subkasoly(){
-	Exchange:=beego.AppConfig.String("kasoly::Exchange")
-	ExchangeType:=beego.AppConfig.String("kasoly::ExchangeType")
-	Consum:= Consum{
-		Exchange,
-		ExchangeType,
-		Exchange,
-		Exchange,
-		Exchange}
-	Consum.Sub()
+//mq.Push(mq.ConcernNotice,"mykasoly")
+const(
+	ConcernNotice = "concernNotice" //收藏
+	LibraryRequest = "libraryrequest" //发起借书
+	Agreelibraryrequest = "agreelibraryrequest" //同意借书
+)
+//mq消息类型
+var ExchangeMap = map[string]string{
+	//KASOLY:"x-delayed-message",
+	ConcernNotice:"direct",
+	LibraryRequest:"direct",
+	Agreelibraryrequest:"direct",
 }
 
-func subgo(){
-	Exchange:=beego.AppConfig.String("go::Exchange")
-	ExchangeType:=beego.AppConfig.String("go::ExchangeType")
-	Consum:= Consum{
-		Exchange,
-		ExchangeType,
-		Exchange,
-		Exchange,
-		Exchange}
-	Consum.Sub()
+
+func actionConcernNotice(){
+	Exchange:= ConcernNotice
+	ExchangeType:= ExchangeMap[ConcernNotice]
+	consumer:= &Consumer{
+		Exchange:Exchange,
+		ExchangeType:ExchangeType,
+		Queue :Exchange,
+		BindingKey :Exchange,
+		ConsumerTag :Exchange,
+		HandlerTag :Exchange,
+		HandlerRegister:CreateHandlerRegister(),
+	}
+	ConcernNoticeRegister(consumer)
+	consumer.Sub()
+}
+
+
+func actionLibraryrequest(){
+	Exchange:= LibraryRequest
+	ExchangeType:= ExchangeMap[LibraryRequest]
+	consumer:= &Consumer{
+		Exchange:Exchange,
+		ExchangeType:ExchangeType,
+		Queue :Exchange,
+		BindingKey :Exchange,
+		ConsumerTag :Exchange,
+		HandlerTag :Exchange,
+		HandlerRegister:CreateHandlerRegister(),
+	}
+	LibraryrequestRegister(consumer)
+	consumer.Sub()
+}
+
+
+func actionAgreelibraryrequest(){
+	Exchange:= Agreelibraryrequest
+	ExchangeType:= ExchangeMap[Agreelibraryrequest]
+	consumer:= &Consumer{
+		Exchange:Exchange,
+		ExchangeType:ExchangeType,
+		Queue :Exchange,
+		BindingKey :Exchange,
+		ConsumerTag :Exchange,
+		HandlerTag :Exchange,
+		HandlerRegister:CreateHandlerRegister(),
+	}
+	AgreelibraryrequestRegister(consumer)
+	consumer.Sub()
 }

@@ -41,7 +41,7 @@ type  Users struct {
 }
 
 type  UsersList struct {
-	Userid		string	 `json:"userid" orm:"pk;size(20);column(userid);"`
+	Userid		string	 `json:"userid"`
 	Openid  	string	 `json:"openid"`
 	Wnickname  	string	 `json:"wnickname"`
 	Wimgurl    	string 	 `json:"wimgurl"`
@@ -63,6 +63,33 @@ type  UsersList struct {
 	Logintime	int64  	 `json:"logintime"`
 	Radius     	string	 `json:"radius"`
 }
+
+type  UserInfo struct {
+	Userid		string	 `json:"userid"`
+	Openid  	string	 `json:"openid"`
+	Wnickname  	string	 `json:"wnickname"`
+	Wimgurl    	string 	 `json:"wimgurl"`
+	Nickname  	string 	 `json:"nickname"`
+	Imgurl    	string 	 `json:"imgurl" `
+	Gender  	int64  	 `json:"gender"`
+	Age   		int64 	 `json:"age"`
+	Telphone  	string   `json:"telphone"`
+	Qq  		string   `json:"qq"`
+	Wechat	    string   `json:"wechat"`
+	Weino  		string   `json:"weibo"`
+	Signature  	string   `json:"signature"`
+	Constellation string `json:"constellation"`
+	Province  	string   `json:"province"`
+	City  	    string   `json:"city"`
+	Address  	string   `json:"address"`
+	Long  	    float64  `json:"long"`
+	Lat  	    float64  `json:"lat"`
+	Logintime	int64  	 `json:"logintime"`
+	Created_at  int64  	 `json:"created_at"`
+	Updated_at  int64  	 `json:"updated_at"`
+	Msgtips_num int64 	 `json:"msgtips_num"`
+}
+
 func init()  {
 	orm.RegisterModel(new(Users))
 }
@@ -78,7 +105,7 @@ func (a Users) InsertValidation() error {
 	valid.Required(a.Userid,  "userid").Message("用户编号不能为空！")
 	valid.Required(a.Nickname, "nickname").Message("用户昵称不能为空！")
 	valid.MaxSize(a.Nickname,30,"nickname").Message("用户昵称不大于30个字符！")
-	valid.MinSize(a.Nickname,2,"nickname").Message("用户昵称不小于2个字符！")
+	valid.MinSize(a.Nickname,1,"nickname").Message("用户昵称不小于2个字符！")
 	//valid.Range(a.Age, 0, 100, "age").Message("年龄不符合范围！")
 	if valid.HasErrors() {
 		for _, err := range valid.Errors {
@@ -311,10 +338,10 @@ func RadiusByMember(result interface{}, err error) ([]map[string]string,error) {
 }
 
 //用户上传地理位置
-func  AddLocationByID(openid string,lang float64,lat float64)(err error){
+func  AddLocationByID(openid ,LocationGeo string,lang float64,lat float64)(err error){
 	rc := comm.Pool.Get()
 	defer rc.Close()
-	v,err := rc.Do("GEOADD",comm.LocationGeo,lang,lat,openid)
+	v,err := rc.Do("GEOADD",LocationGeo,lang,lat,openid)
 	fmt.Println(v)
 	return
 }

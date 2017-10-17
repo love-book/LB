@@ -13,6 +13,10 @@ import (
 	"os"
 	"reflect"
 	"time"
+	"sort"
+	"strings"
+	"crypto/sha1"
+	"strconv"
 )
 
 const (
@@ -56,12 +60,17 @@ const (
 type Weixinmp struct {
 	Request     Request
 	AccessToken AccessToken
+	TicketToken TicketToken
 }
 
 func New(token, appId, appSecret string) *Weixinmp {
+	accessToken:=AccessToken{AppId: appId, AppSecret: appSecret}
+	access,_:=accessToken.Fresh()
+	ticketToken:=TicketToken{AppId:appId,AccessToken:access}
 	return &Weixinmp{
 		Request:     Request{Token: token},
-		AccessToken: AccessToken{AppId: appId, AppSecret: appSecret},
+		AccessToken: accessToken,
+		TicketToken: ticketToken,
 	}
 }
 
@@ -694,3 +703,46 @@ func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
 	}
 	return uinf, nil
 }
+
+
+type Wxconf struct {
+	AppId         string `json:"appId"`
+	Timestamp     int    `json:"timestamp"`
+	Noncestr      string `json:"nonceStr"`
+	Signature     string `json:"signature"`
+	JsApiList     []string `json:"jsApiList"`
+}
+var JsApiList =[]string{
+	"onMenuShareTimeline","onMenuShareAppMessage","onMenuShareQQ",
+	"onMenuShareWeibo","onMenuShareQZone","chooseImage",
+	"uploadImage","downloadImage","startRecord","stopRecord",
+	"onVoiceRecordEnd","playVoice","pauseVoice","stopVoice",
+	"translateVoice","openLocation","getLocation","hideOptionMenu",
+	"showOptionMenu","closeWindow","hideMenuItems","showMenuItems",
+	"showAllNonBaseMenuItem","hideAllNonBaseMenuItem","scanQRCode",
+	"chooseWXPay",
+}
+func (this *Weixinmp) GetSignature(w map[string]string) *Wxconf {
+	s := []string{}
+	for k,_:= range w{
+		s = append(s,k)
+	}
+	sort.Strings(s)
+	var signatureStr = ""
+	for _,v:= range s{
+		signatureStr+=v+"="+w[v]+"&"
+	}
+	k := strings.Trim(signatureStr, "&")
+	h := sha1.New()
+	io.WriteString(h,k)
+	sign:= fmt.Sprintf("%x", h.Sum(nil))
+	t,_:=strconv.Atoi(w["timestamp"])
+	return &Wxconf{
+		AppId:this.AccessToken.AppId,
+		Timestamp:t,
+		Noncestr:w["noncestr"],
+		Signature: sign,
+		JsApiList:[]string{},
+	}
+}
+
