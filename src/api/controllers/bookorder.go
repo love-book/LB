@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"math"
+	"github.com/astaxie/beego/orm"
 )
 
 type BookorderController struct {
@@ -27,9 +28,9 @@ func (this *BookorderController) Orderlist() {
 	length := ob.Length
 	draw := ob.Draw
 	var conditions string = ""
-	if ob.Isbn !="" {
+	/*if ob.Isbn !="" {
 		conditions+= " and JSON_EXTRACT(books,'$.isbn') = '"+ob.Isbn+"'"
-	}
+	}*/
 	if  ob.OrderState != "" {
 		conditions+= " and order_state = '"+ob.OrderState+"'"
 	}
@@ -39,23 +40,30 @@ func (this *BookorderController) Orderlist() {
 	if len(books) >= 1{
 		for _,val := range books{
 			book  := map[string]interface{}{}
-			JsonBook  := map[string]interface{}{}
+			JsonBookFrom  := map[string]interface{}{}
+			JsonBookTo  := map[string]interface{}{}
 			JsonFrom  := map[string]interface{}{}
 			JsonTo  := map[string]interface{}{}
 			book["orderid"]     =  val.Orderid
 			book["userid_from"] =  val.Userid_from
 			book["userid_to"]   =  val.Userid_to
-			book["bookqid"]     =  val.Bookqid
-			book["order_type"]  =  val.Order_type
 			book["order_state"] =  val.Order_state
+			book["order_type"] =  val.Order_type
 			book["create_time"] =  val.Create_time
 			book["update_time"] =  val.Update_time
-			Books := []byte(val.Books)
-			err := json.Unmarshal(Books, &JsonBook)
+			Book_from := []byte(val.Book_from)
+			err := json.Unmarshal(Book_from, &JsonBookFrom)
 			if err == nil{
-				book["books"] = &JsonBook
+				book["book_from"] = JsonBookFrom
 			}else{
-				book["books"] = ""
+				book["book_from"] = ""
+			}
+			Book_to := []byte(val.Book_to)
+			err = json.Unmarshal(Book_to, &JsonBookTo)
+			if err == nil{
+				book["book_to"] = JsonBookTo
+			}else{
+				book["book_to"] = ""
 			}
 			UserFrom := []byte(val.User_from)
 			err = json.Unmarshal(UserFrom, &JsonFrom)
@@ -104,9 +112,14 @@ func (this *BookorderController) Orderupdate() {
 	i64, err := strconv.ParseUint(order_state, 10, 8)
 	model.Order_state =  int64(i64)
 	model.Update_time = time.Now().Unix()
-	err = comm.Update(&model)
+	o := orm.NewOrm()
+	Bookorder := new(models.Bookorder)
+	_, err = o.QueryTable(Bookorder).Filter(
+		"orderid", model.Orderid).Filter("userid_from", model.Userid_from).Update(orm.Params{
+		"order_state": model.Order_state,"update_time":model.Update_time,
+	})
 	if err == nil {
-		this.Rsp(true, "当前订单状态已修改!",&model)
+		this.Rsp(true, "当前订单状态已修改!",&model.Orderid)
 	}
 	this.Rsp(false, "修改失败!","")
 }

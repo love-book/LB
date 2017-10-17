@@ -210,16 +210,16 @@ func (this *BooksrackController) Bookrackaddbysn() {
 }
 
 
-// @Title    批量上架/下架/删除图书
-// @Summary  批量上架/下架/删除图书
-// @Description 批量上架/下架/删除图书
+// @Title   删除书架图书
+// @Summary   删除书架图书
+// @Description  删除书架图书
 // @Success 200  { <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid": "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow": "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }
 // @Param   token   header     string  true  "token"
-// @Param	body	body  models.BookStateForm 	true "{<br/>"bookqid":["1","2"],<br/>"book_state":"书架图书状态状态1:上架;2:下架;3:待补充,4:删除"<br/>}"
+// @Param	body	body  models.BookStateForm 	true "{<br/>"bookqid":string,<br/>}"
 // @Failure 100 错误提示信息!y
 // @Failure 500 服务器错误!
-// @router /bookrackupdate [post]
-func (this *BooksrackController) Bookrackupdate() {
+// @router /bookrackdelete [post]
+func (this *BooksrackController) Bookrackdelete() {
 	var ob  *models.BookStateForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 	if len(ob.Bookqid)<=0 {
@@ -228,22 +228,15 @@ func (this *BooksrackController) Bookrackupdate() {
 	for _,v:= range ob.Bookqid{
 		book,err:= models.GetBookById(v)
 		if err == nil {
-			book.Bookqid = v
-			book.Book_state = ob.Book_state
 			if book.Is_borrow == "2"{
 				this.Rsp(false,"图书已借出,不能操作状态",v)
 			}
-			if  ob.Book_state !="1"{
-				book.Is_borrow =  "2"
-			}
-			book.Update_time = time.Now().Unix()
-			models.UpdateBookRackById(book)
-			this.Rsp(true,"操作成功!","")
+			models.DelBookRackById(v)
 		}else{
 			this.Rsp(false,"当前图书不存在",v)
 		}
 	}
-	this.Rsp(false,"未知错误","")
+	this.Rsp(true,"操作成功!","")
 }
 
 
@@ -446,10 +439,16 @@ func (this *BooksrackController) Getbookbysn() {
 				this.Rsp(false, err.Error(),"")
 			}
 		}
-		err = comm.Insert(model)
+		err = comm.Insert(&model)
 		if err != nil{
 			this.Rsp(false,"添加失败!","")
 		}
+		if state==3{
+			this.Rsp(false,"获取失败!","")
+		}
 	}
-	this.Rsp(true,"获取成功!",model)
+	if model.State == 3{
+		this.Rsp(false,"获取失败!","")
+	}
+	this.Rsp(true,"获取成功!",&model)
 }

@@ -2,12 +2,16 @@ package controllers
 
 import (
 	comm "common/conndatabase"
+	"github.com/garyburd/redigo/redis"
 	"models"
 	"time"
 	"encoding/json"
 	"strings"
 	"math"
 	"strconv"
+	"fmt"
+	"io/ioutil"
+	"encoding/base64"
 )
 
 // User API
@@ -15,29 +19,7 @@ type UsersController struct {
 	ApiController
 }
 
-// @Title 上传文件
-// @Description 上传文件
-// @Summary  上传文件
-// @Success 200  {<br/>  "url": "url" <br/> }
-// @Param   fname  formData   file  true   "文件"
-// @Failure 100 错误提示信息!
-// @Failure 500 服务器错误!
-// @Consumes  multipart/form-data
-// @router /uploadfile [post]
-func (this *UsersController) Uploadfile() {
-	f, h, err := this.GetFile("fname")
-	if err != nil {
-		this.Rsp(false, err.Error(),"")
-	}
-	defer f.Close()
-	FilesUrl := comm.FileUrl()
-	url := FilesUrl + h.Filename
-	file:=this.SaveToFile("fname", "static/upload/" + h.Filename) // 保存位置在 static/upload, 没有文件夹要先创建
-	if  file != nil {
-		this.Rsp(false, file.Error(),"")
-	}
-	this.Rsp(true, "上传成功!", url)
-}
+
 // @Title 获取用户信息
 // @Summary  获取用户信息
 // @Description 获取用户信息
@@ -55,13 +37,7 @@ func (this *UsersController) Userinfo() {
 	}else{
 		conditions+= " and userid ='"+this.Userid+"'"
 	}
-	if ob.Nickname != ""{
-		conditions+= " and nickname ="+ob.Nickname
-	}
-	if ob.Telphone !="" {
-		conditions+= " and telphone = "+ob.Telphone
-	}
-	var user  models.Users
+	var user  models.UserInfo
 	sql := "select * from lb_users where true "+conditions
 	res := comm.RawSeter(sql)
 	err := res.QueryRow(&user)
@@ -74,17 +50,15 @@ func (this *UsersController) Userinfo() {
 // @Description 修改用户
 // @Summary  修改用户
 // @Success 200  {<br/> "userid": "用户编号",<br/> "openid": "openid",<br/> "wnickname": "微信昵称",<br/> "wimgurl": "微信头像", <br/>"nickname": "昵称",<br/> "imgurl": "头像",<br/> "gender":"性别1:男2:女3:保密",<br/> "age":"年龄",<br/> "telphone":"手机号", <br/>"QQ": "QQ",<br/> "weino": "微博号", <br/>"signature": "个性签名", <br/>"address": "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }
-// @Param   token       header     string  true  "token"
-// @Param	body	body   models.UseraddForm  true   "{<br/>"nickname":"昵称",<br/>"openid":"openid",<br/>"wnickname":"微信昵称",<br/>"wimgurl":"微信头像",<br/>"imgurl":"头像",<br/>"gender":"性别1:男2:女3:保密",<br/>"age":"年龄",<br/>"telphone":"手机号",<br/>"qq":"qq",<br/>"Constellation":"星座",<br/>"weino":"微博",<br/>"signature":"个性签名"<br/>}
+// @Param   token   header     string  true  "token"
+// @Param	body	body   models.UserupdateForm  true   "{<br/>"nickname":"昵称",<br/>"openid":"openid",<br/>"wnickname":"微信昵称",<br/>"wimgurl":"微信头像",<br/>"imgurl":"头像",<br/>"gender":"性别1:男2:女3:保密",<br/>"age":"年龄",<br/>"telphone":"手机号",<br/>"code":"手机验证码",<br/>"qq":"qq",<br/>"Constellation":"星座",<br/>"weino":"微博",<br/>"signature":"个性签名"<br/>}
 // @Failure 100 错误提示信息!
 // @Failure 500 服务器错误!
 // @router /updateuser [post]
 func (this *UsersController) Updateuser(){
-	var ob *models.UseraddForm
+	var ob *models.UserupdateForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
-	user := models.Users{}
-	user.Userid = this.Userid
-	if err := comm.Read(&user);err == nil {
+	if user,err := models.GetUsersById(this.Userid);err == nil{
 		if ob.Nickname!=""{
 			user.Nickname = ob.Nickname
 		}
@@ -110,7 +84,16 @@ func (this *UsersController) Updateuser(){
 			user.Age = ob.Age
 		}
 		if ob.Telphone!= ""{
-			user.Telphone = ob.Telphone
+			if ob.Code != ""{
+				//验证验证码
+				rc := comm.Pool.Get()
+				defer rc.Close()
+				code,err:=redis.String(rc.Do("GET",ob.Telphone))
+				fmt.Println(err)
+				if code != ob.Telphone{
+					this.Rsp(false,"验证码错误!",code)
+				}
+			}
 		}
 		if ob.Qq != ""{
 			user.Qq = ob.Qq
@@ -124,8 +107,14 @@ func (this *UsersController) Updateuser(){
 		if ob.Address!= ""{
 			user.Address = ob.Address
 		}
+		if ob.Constellation!= "" {
+			user.Constellation = ob.Constellation
+		}
+		if ob.Wechat!= "" {
+			user.Wechat = ob.Wechat
+		}
 		user.Updated_at = time.Now().Unix()
-		if update:= comm.Update(&user);update ==nil{
+		if update:= models.UpdateUsersById(user);update ==nil{
 			this.Rsp(true,"成功",&user)
 		}else{
 			this.Rsp(false,"失败","")
@@ -135,7 +124,6 @@ func (this *UsersController) Updateuser(){
 }
 
 
-// 根据openid获取地理位置
 // Title  根据openid获取地理位置
 // Summary   根据openid获取地理位置
 // Description 根据openid获取地理位置
@@ -156,7 +144,7 @@ func (this *UsersController) GetLocaltionByID() {
 // @Summary   获取附近的人
 // @Description 获取附近的人
 // @Param   token   header     string  true  "token"
-// @Param	body	body  models.GetUsersByLocaltionForm	true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围20-30",<br/>"radius":"方圆多少米范围内200-300"<br/>}"
+// @Param	body	body  models.GetUsersByLocaltionForm	true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页",<br/> "gender":"性别1:男2:女0:保密",<br/> "age":"年龄范围类型",<br/>"radius":"方圆多少米范围内类型",<br/>"logintime":"最后登陆时间类型"<br/>}"
 // @Success 200  {<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}
 // @Failure 403 :openid is empty
 // @router /getusersbylocaltion [post]
@@ -174,26 +162,61 @@ func (this *UsersController) GetUsersByLocaltion() {
 		conditions+= " and gender ="+ob.Gender
 	}
 	if ob.Age !="" {
-		ageRange:=strings.Split(ob.Age,"-")
-		conditions+= " and u.age >="+ageRange[0]
-		conditions+= " and u.age <="+ageRange[1]
+		ageMap := map[string]string{
+			"1":"0-17",
+			"2":"18-23",
+			"3":"24-30",
+			"4":"31-40",
+			"5":"40-100",
+		}
+		v,ok := ageMap[ob.Age]
+		if ok{
+			ageRange:=strings.Split(v,"-")
+			conditions+= " and age >="+ageRange[0]
+			conditions+= " and age <="+ageRange[1]
+		}
+	}
+	if ob.Logintime !="" {
+		timeMap := map[string]string{
+			"1":"86400", //1d
+			"2":"259200", //3d
+			"3":"604800",  //7d
+			"4":"2592000",  //30d
+		}
+		v,ok := timeMap[ob.Logintime]
+		if ok{
+			t:= time.Now().Unix()
+			timeRange,_:= strconv.Atoi(v)
+			it :=int(t)
+			it-=timeRange
+			conditions+= " and logintime >="+strconv.Itoa(it)
+			conditions+= " and logintime <="+strconv.Itoa(int(t))
+		}
 	}
 	var  openstr  string
 	geokey := this.Province
 	if ob.Radius != "" {
-		radiusRange:=strings.Split(ob.Radius,"-")
-		radius,_:=strconv.ParseInt(radiusRange[1], 10, 64)
-		re,err := models.GetUsersByLocaltion(this.Openid,geokey,radius,draw*length)
-		if err ==nil{
-			for k,v := range re{
-				if k >= ((draw-1)*length){
-					openstr+= "'"+v["member"]+"',"
-				}
-			}
-			openstr=strings.Trim(openstr,",")
+		radiusMap := map[string]int64{
+			"1":1,
+			"2":3,
+			"3":10,
+			"4":50,
+			"5":1000,
 		}
-		if openstr != ""{
-			conditions+= " and openid in("+openstr+")"
+		v,ok := radiusMap[ob.Logintime]
+		if ok{
+			re,err := models.GetUsersByLocaltion(this.Openid,geokey,v,draw*length)
+			if err ==nil{
+				for k,v := range re{
+					if k >= ((draw-1)*length){
+						openstr+= "'"+v["member"]+"',"
+					}
+				}
+				openstr=strings.Trim(openstr,",")
+			}
+			if openstr != ""{
+				conditions+= " and openid in("+openstr+")"
+			}
 		}
 	}
 	users,count := models.GetUserList((draw-1)*length,length,conditions)
@@ -234,9 +257,71 @@ func (this *UsersController) AddLocaltionByID() {
 	if Openid == "" || Lang== 0 || Lat== 0{
 		this.Rsp(false,"提交参数错误!","")
 	}
-	err:= models.AddLocationByID(Openid,Lang,Lat)
+	err:= models.AddLocationByID(Openid,this.Province,Lang,Lat)
 	if err == nil{
 		this.Rsp(true,"成功!",&Openid)
 	}
 	this.Rsp(false,"失败!","")
+}
+
+// @Title    用户意见反馈
+// @Summary   用户意见反馈
+// @Description 用户意见反馈
+// @Param   token   header     string  true  "token"
+// @Param	body	body  models.AddOpinionsForm	true  "{ <br/> "opinions": "意见内容",<br/>"images": "图片"<br/>}"
+// @Success 200  {<br/> "opinions": "意见内容",<br/>"images": "图片"<br/> }
+// @Failure 403 :openid is empty
+// @router /addopinions [post]
+func (this *UsersController) AddOpinions() {
+	var ob *models.AddOpinionsForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	opinion:= models.Opinions{}
+	if ob.Opinions == "" && len(ob.Images)== 0 {
+		this.Rsp(false,"提交参数错误!","")
+	}
+	if len(ob.Images)>0{
+		imgs,_:=json.Marshal(ob.Images)
+		opinion.Images = string(imgs)
+	}else{
+		opinion.Images = "{}"
+	}
+	id := models.GetID()
+	opinion.Id        =  fmt.Sprintf("%d", id)
+	opinion.Userid    =  this.Userid
+	opinion.Opinions  =  ob.Opinions
+	opinion.CreatedAt =  time.Now().Unix()
+	_,err:= models.AddOpinions(&opinion)
+	if err == nil{
+		this.Rsp(true,"成功!",opinion.Id)
+	}
+	this.Rsp(false,"失败!","")
+}
+
+// @Title 上传文件
+// @Description 上传文件
+// @Summary  上传文件
+// @Success 200  {<br/>  "url": "url" <br/> }
+// @Param   token   header     string  true  "token"
+// @Param   base64img  formData   file  true   "文件"
+// @Failure 100 错误提示信息!
+// @Failure 500 服务器错误!
+// @Consumes  multipart/form-data
+// @router /uploadfile [post]
+func (this *UsersController) Uploadfile() {
+	encodeString := this.GetString("base64img")
+	encodeString = encodeString[strings.IndexByte(encodeString, ',')+1:]
+	//encodeString = strings.Replace(encodeString, " ", "", -1)
+	decodeBytes, err := base64.StdEncoding.DecodeString(encodeString)
+	if err != nil {
+		this.Rsp(false, err.Error(), "")
+	}
+	id := models.GetID()
+	fileName := fmt.Sprintf("%d", id)+".png"
+	FilesUrl := comm.FileUrl()
+	url := FilesUrl+fileName
+	err = ioutil.WriteFile("static/upload/"+fileName, decodeBytes, 0666)
+	if err != nil {
+		this.Rsp(false, err.Error(),"")
+	}
+	this.Rsp(true, "上传成功!", url)
 }

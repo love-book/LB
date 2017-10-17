@@ -53,6 +53,12 @@ func init() {
 				&controllers.BookorderController{},
 			),
 		),
+		beego.NSNamespace("/wechat",
+			beego.NSCond(FilterToken),
+			beego.NSInclude(
+				&controllers.WechatController{},
+			),
+		),
 		//不做验证
 		beego.NSNamespace("/app",
 			beego.NSInclude(

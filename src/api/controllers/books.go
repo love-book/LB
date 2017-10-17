@@ -11,6 +11,7 @@ import (
 	"time"
 	"encoding/json"
 	"math"
+	mq "common/rabbitmq"
 )
 
 type BooksController struct {
@@ -145,7 +146,6 @@ func (this *BooksController) Bookadd() {
 	valid.Required(model.Bookid,  "bookid").Message("书籍编号不能为空！")
 	valid.Required(model.Bookname, "bookname").Message("书名不能为空！")
 	valid.Required(model.Author,"author").Message("作者不能为空！")
-	valid.Required(model.Author,"isbn").Message("条形码不能为空！")
 	valid.Required(model.Userid,"userid").Message("用户编号不能为空！")
 	if valid.HasErrors() {
 		for _, err := range valid.Errors {
@@ -185,30 +185,28 @@ func (this *BooksController) Bookadd() {
 
 
 
-// Title 条形码添加书籍
-// Summary  条形码添加书籍
-// Description 条形码添加书籍
-// Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
-// Param   token       header     string  true  "token"
-// Param  userid    formData   string  true    "用户id"
-// Param   isbn      formData   string  true    "条形码"
-// Failure 100 错误提示信息!
-// Failure 500 服务器错误!
-// router /bookaddbycode [post]
+// @Title 条形码添加书籍
+// @Summary  条形码添加书籍
+// @Description 条形码添加书籍
+// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Param   token       header     string  true  "token"
+// @Param	body	body  models.BookrackaddbysnForm  true  {参数含义参考返回值}
+// @Failure 500 服务器错误!
+// @router /bookaddbycode [post]
 func (this *BooksController) Bookaddbycode() {
-	Isbn := this.GetString("isbn")
-	if Isbn == ""{
+	var ob  *models.BookrackaddbysnForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if ob.Isbn == ""{
 		this.Rsp(false,  "条形码不能为空！","")
 	}
-
 	//查询数据库是否存在该条形码
-	book,re:= models.GetIbsn(Isbn)
+	book,re:= models.GetIbsn( ob.Isbn)
 	if re == nil{
 		this.Rsp(true,  "当前图书已添加",&book)
 	}
 	//state 1:扫码正常添加，3:扫码没有查询到结果待补充
 	var state uint8 = 1
-	res, berr:= common.GetBarcodeInfo(Isbn)
+	res, berr:= common.GetBarcodeInfo(ob.Isbn)
 	//查询失败
 	if berr != nil{
 		this.Rsp(false,  "网络繁忙!","")
@@ -233,7 +231,7 @@ func (this *BooksController) Bookaddbycode() {
 	model.Describe = body.GoodsName
 	price, _:= strconv.ParseUint(body.Price, 10, 16)
 	model.Price  = uint16(price)
-	model.Isbn   = Isbn
+	model.Isbn   =  ob.Isbn
 	model.Depreciation = 0
 	model.State = state
 	model.Userid = this.GetString("userid")
@@ -262,7 +260,7 @@ func (this *BooksController) Bookaddbycode() {
 		_,fromRes := o.Insert(&bookRack)
 		if toRes==nil && fromRes==nil{
 			err = o.Commit()
-			this.Rsp(true,"当前图书添加成功!",&model)
+			this.Rsp(true,"当前图书添加成功!",model.Bookid)
 		}else{
 			err = o.Rollback()
 		}
@@ -270,7 +268,7 @@ func (this *BooksController) Bookaddbycode() {
 	if err != nil {
 		this.Rsp(false,  err.Error(),"")
 	}
-	this.Rsp(true,"当前图书添加成功!",&model)
+	this.Rsp(true,"当前图书添加成功!",model.Bookid)
 }
 
 
@@ -280,7 +278,7 @@ func (this *BooksController) Bookaddbycode() {
 // @Title   收藏人/书籍
 // @Summary  收藏人/书籍
 // @Description 收藏人/书籍
-// @Success 200  {<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/> "concern_type": "1:收藏书籍;2:收藏人",<br/> "created_at": "收藏时间" <br/>}
+// @Success 200  {<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/> "concern_type": "1:收藏书籍;2:收藏人;3:通过bookqid收藏",<br/> "created_at": "收藏时间" <br/>}
 // @Param   token   header   string   true   "token"
 // @Param	body	body     models.AddconcernForm  true  {参数含义参考返回值}
 // @Failure 100 错误提示信息!
@@ -297,6 +295,14 @@ func (this *BooksController) Addconcern(){
 	c.UseridTo = this.Userid
 	c.ConcernType = ob.ConcernType
 	c.UseridFrom  = ob.UseridFrom
+	//通过bookqid收藏
+	if c.ConcernType=="3"{
+		bookRack,err:= models.GetBookById(c.UseridFrom)
+		if err!=nil{
+			this.Rsp(false, "当前图书不存在!","")
+		}
+		c.UseridFrom = bookRack.Bookid
+	}
 	var conditions string =""
 	conditions+=" and userid_to='"+c.UseridTo+"'"
 	conditions+=" and userid_from='"+c.UseridFrom+"'"
@@ -305,6 +311,7 @@ func (this *BooksController) Addconcern(){
 	if err==nil{
 		this.Rsp(true, "你已经收藏过了!",&concern)
 	}
+	var mqInfo = map[string]interface{}{}
 	//查询书籍或者用户信息
 	if c.ConcernType=="1"{
 		b,err:=models.GetBookInfo(" and bookid='"+c.UseridFrom+"'")
@@ -313,18 +320,29 @@ func (this *BooksController) Addconcern(){
 		}
 		bk,_:=json.Marshal(&b)
 		c.Books = string(bk)
-	}else if(c.ConcernType=="2"){
+	}else if c.ConcernType=="2" {
 		b,err:=models.GetUsersById(c.UseridFrom)
 		if err!=nil{
 			this.Rsp(false, "当前用户不存在!","")
 		}
 		bk,_:=json.Marshal(&b)
 		c.Books = string(bk)
+		//配置mq消息
+		mqInfo["OpenIdFrom"] = b.Openid
+		mqInfo["Userid"]   = this.Userid
+		mqInfo["UserName"] = this.Nickname
+		mqInfo["Imgurl"]   = this.Imgurl
 	}
 	cid := models.GetID()
 	c.Concernid  = fmt.Sprintf("%d", cid)
 	_, err = models.AddConcern(&c)
 	if err == nil {
+		if c.ConcernType=="2"{
+			m,err :=json.Marshal(&mqInfo)
+			if err ==nil{
+				mq.Push(mq.ConcernNotice,string(m))
+			}
+		}
 		this.Rsp(true, "成功!",&c)
 	} else {
 		this.Rsp(false, "失败!","")
@@ -412,7 +430,7 @@ func (this *BooksController) ConcernBookList() {
 // @Title    收藏的用户列表
 // @Summary  收藏的用户列表
 // @Description 收藏的图书列表
-// @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
+// @Success 200  {<br/> 前方高能,本接口注意:<br/>userid_from 被收藏人编号,userid_to:是收藏人编号<br/>"bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   token       header     string  true  "token"
 // @Param	body	body 	 models.ConcernBookListForm  true   "{ <br/>"length":"获取分页步长", <br/>"draw":"当前页"<br/> }"
 // @Failure 500 服务器错误!
@@ -445,7 +463,7 @@ func (this *BooksController) ConcernUserList() {
 			if err == nil {
 				concerns["books"] = &b
 				//根据用户编号获取其书架最新的三本书
-				b := models.BooksrackList(0, 3, " and u.userid ='"+v.UseridFrom+"'")
+				b := models.UserBooksrackList(0, 3, " and u.userid ='"+v.UseridFrom+"'")
 				concerns["booksList"] = &b
 			} else {
 				concerns["books"] = ""

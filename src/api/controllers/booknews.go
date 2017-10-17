@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego/orm"
 	"math"
+	mq "common/rabbitmq"
 )
 
 type BooknewsController struct {
@@ -28,31 +29,38 @@ func (this *BooknewsController) Newslist() {
 	draw := ob.Draw
 	var conditions string = " "
 	conditions+= " and userid_from ='"+this.Userid+"'"
-	if ob.OrderState!="" {
+	/*if ob.OrderState!="" {
 		conditions+= " and order_state = '"+ob.OrderState+"'"
-	}
+	}*/
 	var resPonse []interface{}
 	books,count := models.BooknewsListDataBack((draw-1) * length,length,conditions)
 	if len(books) >= 1 {
 		for _,val := range books{
 			book  := map[string]interface{}{}
-			JsonBook  := map[string]interface{}{}
+			JsonBookFrom  := map[string]interface{}{}
+			JsonBookTo  := map[string]interface{}{}
 			JsonFrom  := map[string]interface{}{}
 			JsonTo  := map[string]interface{}{}
 			book["newid"] =  val.Newid
 			book["userid_from"] =  val.Userid_from
 			book["userid_to"]   =  val.Userid_to
-			book["bookqid"]     =  val.Bookqid
 			book["order_state"] =  val.Order_state
 			book["order_type"] =  val.Order_type
 			book["create_time"] =  val.Create_time
 			book["update_time"] =  val.Update_time
-			Books := []byte(val.Books)
-			err := json.Unmarshal(Books, &JsonBook)
+			Book_from := []byte(val.Book_from)
+			err := json.Unmarshal(Book_from, &JsonBookFrom)
 			if err == nil{
-				book["books"] = &JsonBook
+				book["book_from"] = JsonBookFrom
 			}else{
-				book["books"] = ""
+				book["book_from"] = ""
+			}
+			Book_to := []byte(val.Book_to)
+			err = json.Unmarshal(Book_to, &JsonBookTo)
+			if err == nil{
+				book["book_to"] = JsonBookTo
+			}else{
+				book["book_to"] = ""
 			}
 			UserFrom := []byte(val.User_from)
 			err = json.Unmarshal(UserFrom, &JsonFrom)
@@ -68,6 +76,7 @@ func (this *BooknewsController) Newslist() {
 			}else{
 				book["user_to"]   =  ""
 			}
+			book["order_desc"] ="二狗子就是想跟你换书!!!服不服"
 			resPonse = append(resPonse,&book)
 		}
 	}
@@ -92,7 +101,7 @@ func (this *BooknewsController) Libraryrequest() {
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 	bookqid :=   ob.Bookqid
 	to      :=   this.Userid
-	if  bookqid=="" || to == "" || ob.Telphone==""|| ob.Qq=="" || ob.Wechat== ""{
+	if  bookqid=="" || to == "" || (ob.Telphone=="" && ob.Qq=="" && ob.Wechat== ""){
 		this.Rsp(false, "参数错误!","")
 	}
 	//查询书主人用户书架
@@ -100,17 +109,21 @@ func (this *BooknewsController) Libraryrequest() {
 	if err != nil {
 		this.Rsp(false, "不存在当前图书!","")
 	}
+	if book.Userid == to{
+		this.Rsp(false, "你已经拥有一本当前图书!","")
+	}
 	//书信息
 	newBook := map[string]interface{}{}
-	newBook["bookid"] = book.Bookid
+	newBook["bookqid"]  = bookqid
+	newBook["bookid"]   = book.Bookid
 	newBook["bookname"] = book.Bookname
-	newBook["auhtor"] = book.Author
+	newBook["auhtor"]   = book.Author
 	newBook["imageurl"] = book.Imageurl
 	newBook["imagehead"] = book.Imagehead
 	newBook["imageback"] = book.Imageback
-	newBook["isbn"]  = book.Isbn
+	newBook["isbn"]   = book.Isbn
 	newBook["depreciation"] = book.Depreciation
-	newBook["price"] = book.Price
+	newBook["price"]  = book.Price
 	newBook["describe"] = book.Describe
 	newBook["state"]   =  book.State
 	//查询书主人以及借书用户信息
@@ -162,15 +175,15 @@ func (this *BooknewsController) Libraryrequest() {
 	//书主人消息
 	FromInfo := models.Booknews{}
 	id := models.GetID()
-	FromInfo.Newid =  fmt.Sprintf("%d", id)
-	FromInfo.Bookqid = book.Bookqid
-	FromInfo.Userid_from = book.Userid
-	FromInfo.Userid_to = to
-	FromInfo.Books  = string(res)
-	FromInfo.User_from = string(fty)
-	FromInfo.User_to = string(tty)
-	FromInfo.Order_type = 1
-	FromInfo.Order_state = 0
+	FromInfo.Newid       =  fmt.Sprintf("%d", id)
+	FromInfo.Userid_from =  book.Userid
+	FromInfo.Userid_to   =  to
+	FromInfo.Book_from   =  string(res)
+	FromInfo.Book_to     =  "{}"
+	FromInfo.User_from   =  string(fty)
+	FromInfo.User_to     =  string(tty)
+	FromInfo.Order_type  =  1
+	FromInfo.Order_state =  0
 	t:= time.Now().Unix()
 	FromInfo.Create_time = t
 	FromInfo.Update_time = t
@@ -178,6 +191,8 @@ func (this *BooknewsController) Libraryrequest() {
 	toInfo := FromInfo
 	toInfo.Userid_from =  to
 	toInfo.Userid_to   =  book.Userid
+	toInfo.Book_from   =  FromInfo.Book_to
+	toInfo.Book_to     =  FromInfo.Book_from
 	toInfo.User_from   =  FromInfo.User_to
 	toInfo.User_to     =  FromInfo.User_from
 	toInfo.Order_type  =  2
@@ -191,6 +206,17 @@ func (this *BooknewsController) Libraryrequest() {
 			err = o.Rollback()
 		}
 		if err == nil{
+			//推送
+			var mqInfo = map[string]interface{}{
+				"OpenIdFrom": UserFrom["openid"],
+				"Userid":this.Userid,
+				"UserName":this.Nickname,
+				"Imgurl":this.Imgurl,
+			}
+			m,err :=json.Marshal(&mqInfo)
+			if err ==nil{
+				mq.Push(mq.LibraryRequest,string(m))
+			}
 			this.Rsp(true, "借书请求发送成功!",FromInfo.Newid)
 		}
 	}
@@ -199,9 +225,9 @@ func (this *BooknewsController) Libraryrequest() {
 
 
 
-// @Title    同意借书请求
-// @Summary  同意借书请求
-// @Description 同意借书请求
+// @Title     选择对方一本书后同意借书请求
+// @Summary    选择对方一本书后同意借书请求
+// @Description  选择对方一本书后同意借书请求
 // @Success 200  {<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }
 // @Param   token   header   string  true  "token"
 // @Param	body	body     models.AgreeLibraryrequestForm 	true   "{ <br/>"newid":"消息编号"<br/>}"
@@ -211,13 +237,38 @@ func (this *BooknewsController) Libraryrequest() {
 func (this *BooknewsController) Agreelibraryrequest() {
 	var ob  *models.AgreeLibraryrequestForm
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
-	if   ob.Newid ==""|| ob.Qq=="" || ob.Wechat=="" || ob.Telphone==""{
+	if   ob.Newid ==""|| ob.Qq=="" || ob.Wechat=="" || ob.Telphone=="" || ob.Bookqid==""{
 		this.Rsp(false, "参数错误!","")
 	}
 	model,err := models.BooknewsInfo(" and newid="+ob.Newid+" and userid_from="+this.Userid)
 	if err!=nil{
 		this.Rsp(false, "无法更改当前消息!","")
 	}
+	//查询书用户书架
+	book,err:= models.GetUserBookRack(ob.Bookqid)
+	if err != nil {
+		this.Rsp(false, "不存在当前图书!","")
+	}
+	//书信息
+	newBook := map[string]interface{}{}
+	newBook["bookqid"]  = book.Bookqid
+	newBook["bookid"]   = book.Bookid
+	newBook["bookname"] = book.Bookname
+	newBook["auhtor"]   = book.Author
+	newBook["imageurl"] = book.Imageurl
+	newBook["imagehead"] = book.Imagehead
+	newBook["imageback"] = book.Imageback
+	newBook["isbn"]   = book.Isbn
+	newBook["depreciation"] = book.Depreciation
+	newBook["price"]  = book.Price
+	newBook["describe"] = book.Describe
+	newBook["state"]   =  book.State
+	res,rerr:= json.Marshal(&newBook)
+	if rerr != nil{
+		this.Rsp(false, "未知错误!","")
+	}
+	model.Book_to = string(res)
+
 	var User_from  map[string]interface{}
 	err = json.Unmarshal([]byte(model.User_from),&User_from)
 	User_from["qq"]       = ob.Qq
@@ -235,8 +286,8 @@ func (this *BooknewsController) Agreelibraryrequest() {
 		OrderTo.Update_time =  t
 		OrderTo.Userid_to   =  model.Userid_to
 		OrderTo.Userid_from =  model.Userid_from
-		OrderTo.Books       =  model.Books
-		OrderTo.Bookqid     =  model.Bookqid
+		OrderTo.Book_from   =  model.Book_from
+		OrderTo.Book_to     =  model.Book_to
 		OrderTo.User_from   =  model.User_from
 		OrderTo.User_to     =  model.User_to
 		OrderTo.Order_type  =  model.Order_type
@@ -245,6 +296,8 @@ func (this *BooknewsController) Agreelibraryrequest() {
 		OrderFrom =  OrderTo
 		OrderFrom.Userid_to   =  OrderTo.Userid_from
 		OrderFrom.Userid_from =  OrderTo.Userid_to
+		OrderFrom.Book_from   =  model.Book_to
+		OrderFrom.Book_to     =  model.Book_from
 		OrderFrom.User_from   =  OrderTo.User_to
 		OrderFrom.User_to     =  OrderTo.User_from
 		OrderFrom.Order_type  =  2
@@ -256,12 +309,12 @@ func (this *BooknewsController) Agreelibraryrequest() {
 			_, err = o.QueryTable(Booknews).Filter(
 				"newid", model.Newid).Filter("userid_from", model.Userid_from).Update(orm.Params{
 				"order_state": model.Order_state,"update_time":model.Update_time,
-				"user_to":model.User_to,"user_from":model.User_from,
+				"user_to":model.User_to,"user_from":model.User_from,"book_to":model.Book_to,
 			})
 			_, err = o.QueryTable(Booknews).Filter(
 				"newid", model.Newid).Filter("userid_to", model.Userid_from).Update(orm.Params{
 				"order_state": model.Order_state,"update_time":model.Update_time,
-				"user_to":model.User_from,"user_from":model.User_to,
+				"user_to":model.User_from,"user_from":model.User_to,"book_from":model.Book_to,
 			})
 			_,err = o.Insert(&OrderTo)
 			_,err = o.Insert(&OrderFrom)
@@ -270,6 +323,19 @@ func (this *BooknewsController) Agreelibraryrequest() {
 				err = o.Rollback()
 			}
 			if err == nil{
+				//同意借书推送
+				var UserF  map[string]interface{}
+				err = json.Unmarshal([]byte(OrderTo.User_from),&UserF)
+				var mqInfo = map[string]interface{}{
+					"OpenIdFrom": UserF["openid"],
+					"Userid":this.Userid,
+					"UserName":this.Nickname,
+					"Imgurl":this.Imgurl,
+				}
+				m,err :=json.Marshal(&mqInfo)
+				if err ==nil{
+					mq.Push(mq.ConcernNotice,string(m))
+				}
 				this.Rsp(true, "当前消息状态已修改!",&model.Newid)
 			}
 		}
@@ -295,13 +361,14 @@ func (this *BooknewsController) Refuselibraryrequest() {
 		this.Rsp(false, "参数错误!","")
 	}
 	model,err := models.BooknewsInfo(" and newid="+newid+" and userid_from="+this.Userid)
+	fmt.Println(model)
 	if err!=nil{
 		this.Rsp(false, "未知错误!","")
 	}
 	model.Update_time = time.Now().Unix()
 	model.Order_state = 2
 	o := orm.NewOrm()
-	_,err =  o.Update(&model,"Order_state","Update_time")
+	_,err =  o.Update(model,"Order_state","Update_time")
 	if err == nil{
 		this.Rsp(true, "已拒绝借书请求!",&model.Newid)
 	}

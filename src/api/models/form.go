@@ -5,10 +5,27 @@ type AccesstokenForm struct {
 	Openid    string    `json:"openid"`
 }
 
+type WxConfigForm struct {
+	Url    string    `json:"url"`
+}
+type WxcodeForm struct {
+	Code    string    `json:"code"`
+}
+
 type LoginForm struct {
 	Telphone  string	`json:"telphone"`
 	Password  string	`json:"password"`
 }
+
+type SmsForm struct {
+	Telphone  string	`json:"telphone"`
+}
+
+type SmsCheckForm struct {
+	Telphone  string	`json:"telphone"`
+	Code  string	`json:"code"`
+}
+
 type UseraddForm struct {
 	Openid  	string	 `json:"openid"`
 	Wnickname  	string	 `json:"wnickname"`
@@ -21,6 +38,31 @@ type UseraddForm struct {
 	Password	string   `json:"password"`
 	Qq  		string   `json:"qq"`
 	Weino  		string   `json:"weibo"`
+	Wechat		string   `json:"wechat"`
+	Signature  	 string   `json:"signature"`
+	Constellation string `json:"constellation"`
+	Province  	string   `json:"province"`
+	City  	    string   `json:"city"`
+	Address  	string   `json:"address"`
+	Long  	    float64  `json:"long"`
+	Lat  	    float64  `json:"lat"`
+}
+
+
+type UserupdateForm struct {
+	Openid  	string	 `json:"openid"`
+	Wnickname  	string	 `json:"wnickname"`
+	Wimgurl    	string 	 `json:"wimgurl"`
+	Nickname  	string 	 `json:"nickname"`
+	Imgurl    	string 	 `json:"imgurl" `
+	Gender  	int64  	 `json:"gender"`
+	Age   		int64 	 `json:"age"`
+	Telphone  	string   `json:"telphone"`
+	Code  	    string   `json:"code"`
+	Password	string   `json:"password"`
+	Qq  		string   `json:"qq"`
+	Weino  		string   `json:"weibo"`
+	Wechat		string   `json:"wechat"`
 	Signature  	 string   `json:"signature"`
 	Constellation string `json:"constellation"`
 	Province  	string   `json:"province"`
@@ -33,7 +75,7 @@ type UseraddForm struct {
 //book
 type BookaddForm struct {
 	Bookname     string `json:"bookname"`
-	Author       string	`json:"auhtor"`
+	Author       string	`json:"author"`
 	Imageurl     string	`json:"imageurl"`
 	Imagehead    string	`json:"imagehead"`
 	Imageback    string	`json:"imageback"`
@@ -41,7 +83,6 @@ type BookaddForm struct {
 	Depreciation uint8	`json:"depreciation"`
 	Price        uint16	`json:"price"`
 	Describe     string	`json:"describe"`
-	Userid		 string	`json:"userid"`
 	State        uint8	`json:"state"`
 }
 
@@ -84,8 +125,7 @@ type  BookrackaddbysnForm struct {
 
 
 type BookStateForm struct {
-	Bookqid        []string   `json:"bookqid"`
-	Book_state     string   `json:"book_state"`
+	Bookqid    []string   `json:"bookqid"`
 }
 
 type  GetbookusersForm struct {
@@ -108,7 +148,7 @@ type  GetuserinfoForm struct {
 type  NewslistForm struct {
 	Length int `json:"length"`
 	Draw   int `json:"draw"`
-	OrderState string  `json:"order_state"`
+	//OrderState string  `json:"order_state"`
 }
 type  LibraryrequestForm struct {
 	Bookqid     string  `json:"bookqid"`
@@ -119,6 +159,7 @@ type  LibraryrequestForm struct {
 
 type  AgreeLibraryrequestForm struct {
 	Newid       string  `json:"newid"`
+	Bookqid     string  `json:"bookqid"`
 	Telphone  	string   `json:"telphone"`
 	Qq  		string   `json:"qq"`
 	Wechat	    string   `json:"wechat"`
@@ -130,8 +171,6 @@ type  RefuseLibraryrequestForm struct {
 //User
 type  UserinfoForm  struct {
 	Userid   string  `json:"userid"`
-	Nickname string  `json:"nickname"`
-	Telphone string  `json:"telphone"`
 }
 
 type  GetUsersByLocaltionForm  struct {
@@ -140,6 +179,7 @@ type  GetUsersByLocaltionForm  struct {
 	Gender string `json:"gender"`
 	Age    string `json:"age"`
 	Radius string `json:"radius"`
+	Logintime string `json:"logintime"`
 }
 
 
@@ -149,12 +189,17 @@ type  AddLocaltionByIDForm  struct {
 }
 
 
+type  AddOpinionsForm  struct {
+	Opinions  string	`json:"opinions"`
+	Images    []string	`json:"images"`
+}
+
+
 // order
 type  OrderlistForm  struct {
 	Length   int `json:"length"`
 	Draw     int `json:"draw"`
 	OrderState   string `json:"order_state"`
-	Isbn	     string `json:"isbn"`
 }
 
 type  OrderupdateForm  struct {

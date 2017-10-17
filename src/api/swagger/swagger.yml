@@ -23,19 +23,63 @@ paths:
           $ref: '#/definitions/models.AccesstokenForm'
       responses:
         "200":
-          description: '{<br/> token}'
+          description: '{<br/> token <br/>}'
         "403":
           description: :openid is empty
-  /app/getwxaccount:
+  /app/checkphonecode:
     post:
       tags:
       - app
-      summary: 获取微信公众号信息
-      description: 获取微信公众号信息
-      operationId: AppController.获取微信公众号信息
+      summary: 手机号验证验证码
+      description: 手机号验证验证码
+      operationId: AppController.手机号验证验证码
+      parameters:
+      - in: body
+        name: body
+        description: '{<br/>telphone:手机号<br/>code:验证码<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.SmsCheckForm'
       responses:
         "200":
-          description: '"{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}'
+          description: '{}'
+        "403":
+          description: :openid is empty
+  /app/getusertokenbycode:
+    post:
+      tags:
+      - app
+      summary: 根据微信授权code获取用户token
+      description: 根据微信授权code获取用户token
+      operationId: AppController.根据微信授权code获取用户token
+      parameters:
+      - in: formData
+        name: code
+        description: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{<br/>"data":"根据微信授权code获取用户token"<br/>}'
+        "403":
+          description: :openid is empty
+  /app/getwxconfig:
+    post:
+      tags:
+      - app
+      summary: 获取微信JSDK签名信息
+      description: 获取微信JSDK签名信息
+      operationId: AppController.获取微信JSDK签名信息
+      parameters:
+      - in: body
+        name: body
+        description: '{<br/>openid:openid<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.WxConfigForm'
+      responses:
+        "200":
+          description: '{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}'
         "403":
           description: :openid is empty
   /app/login:
@@ -55,6 +99,25 @@ paths:
       responses:
         "200":
           description: '{<br/>oX8vKwqsI52Me2J2kCTkkYNohHfQ<br/>oX8vKwueTHOC3wrUkm2eJBnm-m6A<br/>}'
+        "403":
+          description: :openid is empty
+  /app/phonecode:
+    post:
+      tags:
+      - app
+      summary: 手机号获取验证码
+      description: 手机号获取验证码
+      operationId: AppController.手机号获取验证码
+      parameters:
+      - in: body
+        name: body
+        description: '{<br/>telphone:手机号<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.SmsForm'
+      responses:
+        "200":
+          description: '{}'
         "403":
           description: :openid is empty
   /app/useradd:
@@ -107,7 +170,8 @@ paths:
           description: 错误提示信息!
         "200":
           description: '{<br/> "userid_to": "收藏人编号",<br/> "userid_from": "书主人/图书编号",<br/>
-            "concern_type": "1:收藏书籍;2:收藏人",<br/> "created_at": "收藏时间" <br/>}'
+            "concern_type": "1:收藏书籍;2:收藏人;3:通过bookqid收藏",<br/> "created_at": "收藏时间"
+            <br/>}'
         "500":
           description: 服务器错误!
   /book/bookadd:
@@ -136,6 +200,34 @@ paths:
           description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
             "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
             "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"折旧",<br/> "price":"标价",
+            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
+  /book/bookaddbycode:
+    post:
+      tags:
+      - book
+      summary: 条形码添加书籍
+      description: 条形码添加书籍
+      operationId: BooksController.条形码添加书籍
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{参数含义参考返回值}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookrackaddbysnForm'
+      responses:
+        "200":
+          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
+            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
+            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
             <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
             }'
         "500":
@@ -217,11 +309,11 @@ paths:
           $ref: '#/definitions/models.ConcernBookListForm'
       responses:
         "200":
-          description: '{<br/> "bookid": "图书编号",<br/> "bookname": "书名",<br/> "author":
-            "作者",<br/> "imgurl": "图书封面图", <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl":
-            "图书背面图",<br/> "barcode":"条形码",<br/> "depreciation":"",<br/> "price":"标价",
-            <br/>"describe": "图书简介",<br/> "state": "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/>
-            }'
+          description: '{<br/> 前方高能,本接口注意:<br/>userid_from 被收藏人编号,userid_to:是收藏人编号<br/>"bookid":
+            "图书编号",<br/> "bookname": "书名",<br/> "author": "作者",<br/> "imgurl": "图书封面图",
+            <br/>"imgheadurl": "图书正面图",<br/> "imgbackurl": "图书背面图",<br/> "barcode":"条形码",<br/>
+            "depreciation":"",<br/> "price":"标价", <br/>"describe": "图书简介",<br/> "state":
+            "状态",<br/> "created_at": "上架时间",<br/>"updated_at":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
   /book/delbookconcern:
@@ -289,9 +381,9 @@ paths:
     post:
       tags:
       - booknews
-      summary: 同意借书请求
-      description: 同意借书请求
-      operationId: BooknewsController.同意借书请求
+      summary: 选择对方一本书后同意借书请求
+      description: 选择对方一本书后同意借书请求
+      operationId: BooknewsController.选择对方一本书后同意借书请求
       parameters:
       - in: header
         name: token
@@ -549,6 +641,35 @@ paths:
             "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
+  /bookrack/bookrackdelete:
+    post:
+      tags:
+      - bookrack
+      summary: 删除书架图书
+      description: 删除书架图书
+      operationId: BooksrackController.删除书架图书
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{<br/>bookqid:string,<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookStateForm'
+      responses:
+        "100":
+          description: 错误提示信息!y
+        "200":
+          description: '{ <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid":
+            "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow":
+            "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/>
+            }'
+        "500":
+          description: 服务器错误!
   /bookrack/bookracklist:
     post:
       tags:
@@ -584,35 +705,6 @@ paths:
             "星座",<br/>"province": "北京市",<br/>"city": "北京市",<br/>"address": "地址",<br/>"long":"经度",<br/>"lat":"纬度",<br/>"logintime":
             "用户最后登录时间",<br/>"created_at": "用户注册时间",<br/>"updated_at": "用户修改资料时间",<br/>"radius":
             "距离" <br/>}'
-        "500":
-          description: 服务器错误!
-  /bookrack/bookrackupdate:
-    post:
-      tags:
-      - bookrack
-      summary: 批量上架/下架/删除图书
-      description: 批量上架/下架/删除图书
-      operationId: BooksrackController.批量上架/下架/删除图书
-      parameters:
-      - in: header
-        name: token
-        description: token
-        required: true
-        type: string
-      - in: body
-        name: body
-        description: '{<br/>bookqid:[1,2],<br/>book_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除<br/>}'
-        required: true
-        schema:
-          $ref: '#/definitions/models.BookStateForm'
-      responses:
-        "100":
-          description: 错误提示信息!y
-        "200":
-          description: '{ <br/>"bookqid": "图书唯一编号",<br/> "userid": "用户id",<br/> "bookid":
-            "图书编号", <br/>"book_state": "状态1:上架;2:下架;3:待补充4:删除",<br/> "is_borrow":
-            "状态1:可借阅;2:已借出;3:不可借",<br/> "create_time": "上架时间",<br/>"update_time":"信息修改时间"<br/>
-            }'
         "500":
           description: 服务器错误!
   /bookrack/getbookbysn:
@@ -845,6 +937,30 @@ paths:
           description: '{<br/> "lat": "经度",<br/>"lang": "纬度",<br/> "openid": "openid"}'
         "403":
           description: :openid is empty
+  /users/addopinions:
+    post:
+      tags:
+      - users
+      summary: 用户意见反馈
+      description: 用户意见反馈
+      operationId: UsersController.用户意见反馈
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{ <br/> opinions: 意见内容,<br/>images: 图片<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddOpinionsForm'
+      responses:
+        "200":
+          description: '{<br/> "opinions": "意见内容",<br/>"images": "图片"<br/> }'
+        "403":
+          description: :openid is empty
   /users/getusersbylocaltion:
     post:
       tags:
@@ -861,7 +977,7 @@ paths:
       - in: body
         name: body
         description: '{ <br/>length:获取分页步长, <br/>draw:当前页,<br/> gender:性别1:男2:女0:保密,<br/>
-          age:年龄范围20-30,<br/>radius:方圆多少米范围内200-300<br/>}'
+          age:年龄范围类型,<br/>radius:方圆多少米范围内类型,<br/>logintime:最后登陆时间类型<br/>}'
         required: true
         schema:
           $ref: '#/definitions/models.GetUsersByLocaltionForm'
@@ -885,10 +1001,10 @@ paths:
         type: string
       - in: body
         name: body
-        description: '{<br/>nickname:昵称,<br/>openid:openid,<br/>wnickname:微信昵称,<br/>wimgurl:微信头像,<br/>imgurl:头像,<br/>gender:性别1:男2:女3:保密,<br/>age:年龄,<br/>telphone:手机号,<br/>qq:qq,<br/>Constellation:星座,<br/>weino:微博,<br/>signature:个性签名<br/>}'
+        description: '{<br/>nickname:昵称,<br/>openid:openid,<br/>wnickname:微信昵称,<br/>wimgurl:微信头像,<br/>imgurl:头像,<br/>gender:性别1:男2:女3:保密,<br/>age:年龄,<br/>telphone:手机号,<br/>code:手机验证码,<br/>qq:qq,<br/>Constellation:星座,<br/>weino:微博,<br/>signature:个性签名<br/>}'
         required: true
         schema:
-          $ref: '#/definitions/models.UseraddForm'
+          $ref: '#/definitions/models.UserupdateForm'
       responses:
         "100":
           description: 错误提示信息!
@@ -908,8 +1024,13 @@ paths:
       description: 上传文件
       operationId: UsersController.上传文件
       parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
       - in: formData
-        name: fname
+        name: base64img
         description: 文件
         required: true
         type: file
@@ -948,6 +1069,30 @@ paths:
             "个人地址",<br/> "created_at": "注册时间",<br/>"updated_at":"信息修改时间"<br/> }'
         "500":
           description: 服务器错误!
+  /wechat/setwxmenu:
+    post:
+      tags:
+      - wechat
+      summary: 设置公众号菜单
+      description: 设置公众号菜单
+      operationId: WechatController.设置公众号菜单
+      parameters:
+      - in: header
+        name: token
+        description: token
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: '{<br/>openid:openid<br/>}'
+        required: true
+        schema:
+          $ref: '#/definitions/models.WxConfigForm'
+      responses:
+        "200":
+          description: '"{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}'
+        "403":
+          description: :openid is empty
 definitions:
   models.AccesstokenForm:
     title: AccesstokenForm
@@ -965,6 +1110,16 @@ definitions:
       lat:
         type: number
         format: double
+  models.AddOpinionsForm:
+    title: AddOpinionsForm
+    type: object
+    properties:
+      images:
+        type: array
+        items:
+          type: string
+      opinions:
+        type: string
   models.AddconcernForm:
     title: AddconcernForm
     type: object
@@ -977,6 +1132,8 @@ definitions:
     title: AgreeLibraryrequestForm
     type: object
     properties:
+      bookqid:
+        type: string
       newid:
         type: string
       qq:
@@ -999,8 +1156,6 @@ definitions:
     title: BookStateForm
     type: object
     properties:
-      book_state:
-        type: string
       bookqid:
         type: array
         items:
@@ -1009,7 +1164,7 @@ definitions:
     title: BookaddForm
     type: object
     properties:
-      auhtor:
+      author:
         type: string
       bookname:
         type: string
@@ -1032,8 +1187,6 @@ definitions:
       state:
         type: integer
         format: int32
-      userid:
-        type: string
   models.BookrackaddForm:
     title: BookrackaddForm
     type: object
@@ -1096,6 +1249,8 @@ definitions:
       length:
         type: integer
         format: int64
+      logintime:
+        type: string
       radius:
         type: string
   models.GetbookinfoForm:
@@ -1158,8 +1313,6 @@ definitions:
       length:
         type: integer
         format: int64
-      order_state:
-        type: string
   models.OrderdeleteForm:
     title: OrderdeleteForm
     type: object
@@ -1173,8 +1326,6 @@ definitions:
       draw:
         type: integer
         format: int64
-      isbn:
-        type: string
       length:
         type: integer
         format: int64
@@ -1193,6 +1344,20 @@ definitions:
     type: object
     properties:
       newid:
+        type: string
+  models.SmsCheckForm:
+    title: SmsCheckForm
+    type: object
+    properties:
+      code:
+        type: string
+      telphone:
+        type: string
+  models.SmsForm:
+    title: SmsForm
+    type: object
+    properties:
+      telphone:
         type: string
   models.UseraddForm:
     title: UseraddForm
@@ -1232,6 +1397,8 @@ definitions:
         type: string
       telphone:
         type: string
+      wechat:
+        type: string
       weibo:
         type: string
       wimgurl:
@@ -1242,16 +1409,69 @@ definitions:
     title: UserinfoForm
     type: object
     properties:
+      userid:
+        type: string
+  models.UserupdateForm:
+    title: UserupdateForm
+    type: object
+    properties:
+      address:
+        type: string
+      age:
+        type: integer
+        format: int64
+      city:
+        type: string
+      code:
+        type: string
+      constellation:
+        type: string
+      gender:
+        type: integer
+        format: int64
+      imgurl:
+        type: string
+      lat:
+        type: number
+        format: double
+      long:
+        type: number
+        format: double
       nickname:
+        type: string
+      openid:
+        type: string
+      password:
+        type: string
+      province:
+        type: string
+      qq:
+        type: string
+      signature:
         type: string
       telphone:
         type: string
-      userid:
+      wechat:
+        type: string
+      weibo:
+        type: string
+      wimgurl:
+        type: string
+      wnickname:
+        type: string
+  models.WxConfigForm:
+    title: WxConfigForm
+    type: object
+    properties:
+      url:
         type: string
 tags:
 - name: users
   description: |
     User API
+- name: wechat
+  description: |
+    Wechat API
 - name: app
   description: |
     App API

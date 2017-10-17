@@ -31,7 +31,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "{\u003cbr/\u003e token}"
+                        "description": "{\u003cbr/\u003e token \u003cbr/\u003e}"
                     },
                     "403": {
                         "description": ":openid is empty"
@@ -39,17 +39,84 @@
                 }
             }
         },
-        "/app/getwxaccount": {
+        "/app/checkphonecode": {
             "post": {
                 "tags": [
                     "app"
                 ],
-                "summary": "获取微信公众号信息",
-                "description": "获取微信公众号信息",
-                "operationId": "AppController.获取微信公众号信息",
+                "summary": "手机号验证验证码",
+                "description": "手机号验证验证码",
+                "operationId": "AppController.手机号验证验证码",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003etelphone:手机号\u003cbr/\u003ecode:验证码\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.SmsCheckForm"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "\"{\u003cbr/\u003e\"appid\":\"微信公众平台的AppID\"\u003cbr/\u003e,\"secret\":\"微信公众平台的AppSecret\"\u003cbr/\u003e}"
+                        "description": "{}"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
+        },
+        "/app/getusertokenbycode": {
+            "post": {
+                "tags": [
+                    "app"
+                ],
+                "summary": "根据微信授权code获取用户token",
+                "description": "根据微信授权code获取用户token",
+                "operationId": "AppController.根据微信授权code获取用户token",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "code",
+                        "description": "code",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e\"data\":\"根据微信授权code获取用户token\"\u003cbr/\u003e}"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
+        },
+        "/app/getwxconfig": {
+            "post": {
+                "tags": [
+                    "app"
+                ],
+                "summary": "获取微信JSDK签名信息",
+                "description": "获取微信JSDK签名信息",
+                "operationId": "AppController.获取微信JSDK签名信息",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003eopenid:openid\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WxConfigForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e\"appid\":\"微信公众平台的AppID\"\u003cbr/\u003e,\"secret\":\"微信公众平台的AppSecret\"\u003cbr/\u003e}"
                     },
                     "403": {
                         "description": ":openid is empty"
@@ -79,6 +146,35 @@
                 "responses": {
                     "200": {
                         "description": "{\u003cbr/\u003eoX8vKwqsI52Me2J2kCTkkYNohHfQ\u003cbr/\u003eoX8vKwueTHOC3wrUkm2eJBnm-m6A\u003cbr/\u003e}"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
+        },
+        "/app/phonecode": {
+            "post": {
+                "tags": [
+                    "app"
+                ],
+                "summary": "手机号获取验证码",
+                "description": "手机号获取验证码",
+                "operationId": "AppController.手机号获取验证码",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003etelphone:手机号\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.SmsForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{}"
                     },
                     "403": {
                         "description": ":openid is empty"
@@ -149,7 +245,7 @@
                         "description": "错误提示信息!"
                     },
                     "200": {
-                        "description": "{\u003cbr/\u003e \"userid_to\": \"收藏人编号\",\u003cbr/\u003e \"userid_from\": \"书主人/图书编号\",\u003cbr/\u003e \"concern_type\": \"1:收藏书籍;2:收藏人\",\u003cbr/\u003e \"created_at\": \"收藏时间\" \u003cbr/\u003e}"
+                        "description": "{\u003cbr/\u003e \"userid_to\": \"收藏人编号\",\u003cbr/\u003e \"userid_from\": \"书主人/图书编号\",\u003cbr/\u003e \"concern_type\": \"1:收藏书籍;2:收藏人;3:通过bookqid收藏\",\u003cbr/\u003e \"created_at\": \"收藏时间\" \u003cbr/\u003e}"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -189,6 +285,42 @@
                     },
                     "200": {
                         "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"折旧\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
+        "/book/bookaddbycode": {
+            "post": {
+                "tags": [
+                    "book"
+                ],
+                "summary": "条形码添加书籍",
+                "description": "条形码添加书籍",
+                "operationId": "BooksController.条形码添加书籍",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{参数含义参考返回值}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BookrackaddbysnForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -296,7 +428,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "{\u003cbr/\u003e \"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
+                        "description": "{\u003cbr/\u003e 前方高能,本接口注意:\u003cbr/\u003euserid_from 被收藏人编号,userid_to:是收藏人编号\u003cbr/\u003e\"bookid\": \"图书编号\",\u003cbr/\u003e \"bookname\": \"书名\",\u003cbr/\u003e \"author\": \"作者\",\u003cbr/\u003e \"imgurl\": \"图书封面图\", \u003cbr/\u003e\"imgheadurl\": \"图书正面图\",\u003cbr/\u003e \"imgbackurl\": \"图书背面图\",\u003cbr/\u003e \"barcode\":\"条形码\",\u003cbr/\u003e \"depreciation\":\"\",\u003cbr/\u003e \"price\":\"标价\", \u003cbr/\u003e\"describe\": \"图书简介\",\u003cbr/\u003e \"state\": \"状态\",\u003cbr/\u003e \"created_at\": \"上架时间\",\u003cbr/\u003e\"updated_at\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -387,9 +519,9 @@
                 "tags": [
                     "booknews"
                 ],
-                "summary": "同意借书请求",
-                "description": "同意借书请求",
-                "operationId": "BooknewsController.同意借书请求",
+                "summary": "选择对方一本书后同意借书请求",
+                "description": "选择对方一本书后同意借书请求",
+                "operationId": "BooknewsController.选择对方一本书后同意借书请求",
                 "parameters": [
                     {
                         "in": "header",
@@ -727,6 +859,45 @@
                 }
             }
         },
+        "/bookrack/bookrackdelete": {
+            "post": {
+                "tags": [
+                    "bookrack"
+                ],
+                "summary": "删除书架图书",
+                "description": "删除书架图书",
+                "operationId": "BooksrackController.删除书架图书",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003ebookqid:string,\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BookStateForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "100": {
+                        "description": "错误提示信息!y"
+                    },
+                    "200": {
+                        "description": "{ \u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充4:删除\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
+                    },
+                    "500": {
+                        "description": "服务器错误!"
+                    }
+                }
+            }
+        },
         "/bookrack/bookracklist": {
             "post": {
                 "tags": [
@@ -756,45 +927,6 @@
                 "responses": {
                     "200": {
                         "description": "{\u003cbr/\u003e\"bookqid\":\"图书唯一编号\",\u003cbr/\u003e\"userid\": \"用户编号\",\u003cbr/\u003e\"openid\": \"oX8vKwueTHOC3wrUkm2eJBnm-m6A\",\u003cbr/\u003e\"bookid\": \"图书编号\",\u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充,4:删除\",\u003cbr/\u003e\"is_borrow\": \"状态1:可借阅;2:不可借;\",\u003cbr/\u003e\"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\": \"修改时间\",\u003cbr/\u003e\"bookname\": \"书名\",\u003cbr/\u003e\"auhtor\": \"作者\",\u003cbr/\u003e\"imageurl\": \"图书封面图\",\u003cbr/\u003e\"imagehead\": \"图书正面图\",\u003cbr/\u003e\"imageback\": \"图书背面图\",\u003cbr/\u003e\"isbn\": \"图书条形码\",\u003cbr/\u003e\"depreciation\": \"图书折旧\",\u003cbr/\u003e\"price\": \"图书标价\",\u003cbr/\u003e\"describe\": \"图书描述\",\u003cbr/\u003e\"state\": '状态 0非锁定状态 1：锁定状态',\u003cbr/\u003e\"wnickname\": \"微信昵称\",\u003cbr/\u003e\"wimgurl\": \"微信头像\",\u003cbr/\u003e\"nickname\": \"用户昵称\",\u003cbr/\u003e\"imgurl\": \"用户头像\",\u003cbr/\u003e\"gender\": \"性别1:男2:女0:保密\",\u003cbr/\u003e\"age\": \"年龄\",\u003cbr/\u003e\"telphone\": \"手机号\",\u003cbr/\u003e\"password\": \"密码\",\u003cbr/\u003e\"qq\": \"QQ号\",\u003cbr/\u003e\"weibo\": \"微博号\",\u003cbr/\u003e\"signature\": \"个性签名\",\u003cbr/\u003e\"constellation\": \"星座\",\u003cbr/\u003e\"province\": \"北京市\",\u003cbr/\u003e\"city\": \"北京市\",\u003cbr/\u003e\"address\": \"地址\",\u003cbr/\u003e\"long\":\"经度\",\u003cbr/\u003e\"lat\":\"纬度\",\u003cbr/\u003e\"logintime\": \"用户最后登录时间\",\u003cbr/\u003e\"created_at\": \"用户注册时间\",\u003cbr/\u003e\"updated_at\": \"用户修改资料时间\",\u003cbr/\u003e\"radius\": \"距离\" \u003cbr/\u003e}"
-                    },
-                    "500": {
-                        "description": "服务器错误!"
-                    }
-                }
-            }
-        },
-        "/bookrack/bookrackupdate": {
-            "post": {
-                "tags": [
-                    "bookrack"
-                ],
-                "summary": "批量上架/下架/删除图书",
-                "description": "批量上架/下架/删除图书",
-                "operationId": "BooksrackController.批量上架/下架/删除图书",
-                "parameters": [
-                    {
-                        "in": "header",
-                        "name": "token",
-                        "description": "token",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "body",
-                        "name": "body",
-                        "description": "{\u003cbr/\u003ebookqid:[1,2],\u003cbr/\u003ebook_state:书架图书状态状态1:上架;2:下架;3:待补充,4:删除\u003cbr/\u003e}",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.BookStateForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "100": {
-                        "description": "错误提示信息!y"
-                    },
-                    "200": {
-                        "description": "{ \u003cbr/\u003e\"bookqid\": \"图书唯一编号\",\u003cbr/\u003e \"userid\": \"用户id\",\u003cbr/\u003e \"bookid\": \"图书编号\", \u003cbr/\u003e\"book_state\": \"状态1:上架;2:下架;3:待补充4:删除\",\u003cbr/\u003e \"is_borrow\": \"状态1:可借阅;2:已借出;3:不可借\",\u003cbr/\u003e \"create_time\": \"上架时间\",\u003cbr/\u003e\"update_time\":\"信息修改时间\"\u003cbr/\u003e }"
                     },
                     "500": {
                         "description": "服务器错误!"
@@ -1072,6 +1204,42 @@
                 }
             }
         },
+        "/users/addopinions": {
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "用户意见反馈",
+                "description": "用户意见反馈",
+                "operationId": "UsersController.用户意见反馈",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{ \u003cbr/\u003e opinions: 意见内容,\u003cbr/\u003eimages: 图片\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AddOpinionsForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\u003cbr/\u003e \"opinions\": \"意见内容\",\u003cbr/\u003e\"images\": \"图片\"\u003cbr/\u003e }"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
+        },
         "/users/getusersbylocaltion": {
             "post": {
                 "tags": [
@@ -1091,7 +1259,7 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e gender:性别1:男2:女0:保密,\u003cbr/\u003e age:年龄范围20-30,\u003cbr/\u003eradius:方圆多少米范围内200-300\u003cbr/\u003e}",
+                        "description": "{ \u003cbr/\u003elength:获取分页步长, \u003cbr/\u003edraw:当前页,\u003cbr/\u003e gender:性别1:男2:女0:保密,\u003cbr/\u003e age:年龄范围类型,\u003cbr/\u003eradius:方圆多少米范围内类型,\u003cbr/\u003elogintime:最后登陆时间类型\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.GetUsersByLocaltionForm"
@@ -1127,10 +1295,10 @@
                     {
                         "in": "body",
                         "name": "body",
-                        "description": "{\u003cbr/\u003enickname:昵称,\u003cbr/\u003eopenid:openid,\u003cbr/\u003ewnickname:微信昵称,\u003cbr/\u003ewimgurl:微信头像,\u003cbr/\u003eimgurl:头像,\u003cbr/\u003egender:性别1:男2:女3:保密,\u003cbr/\u003eage:年龄,\u003cbr/\u003etelphone:手机号,\u003cbr/\u003eqq:qq,\u003cbr/\u003eConstellation:星座,\u003cbr/\u003eweino:微博,\u003cbr/\u003esignature:个性签名\u003cbr/\u003e}",
+                        "description": "{\u003cbr/\u003enickname:昵称,\u003cbr/\u003eopenid:openid,\u003cbr/\u003ewnickname:微信昵称,\u003cbr/\u003ewimgurl:微信头像,\u003cbr/\u003eimgurl:头像,\u003cbr/\u003egender:性别1:男2:女3:保密,\u003cbr/\u003eage:年龄,\u003cbr/\u003etelphone:手机号,\u003cbr/\u003ecode:手机验证码,\u003cbr/\u003eqq:qq,\u003cbr/\u003eConstellation:星座,\u003cbr/\u003eweino:微博,\u003cbr/\u003esignature:个性签名\u003cbr/\u003e}",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.UseraddForm"
+                            "$ref": "#/definitions/models.UserupdateForm"
                         }
                     }
                 ],
@@ -1157,8 +1325,15 @@
                 "operationId": "UsersController.上传文件",
                 "parameters": [
                     {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
                         "in": "formData",
-                        "name": "fname",
+                        "name": "base64img",
                         "description": "文件",
                         "required": true,
                         "type": "file"
@@ -1212,6 +1387,42 @@
                     }
                 }
             }
+        },
+        "/wechat/setwxmenu": {
+            "post": {
+                "tags": [
+                    "wechat"
+                ],
+                "summary": "设置公众号菜单",
+                "description": "设置公众号菜单",
+                "operationId": "WechatController.设置公众号菜单",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "token",
+                        "description": "token",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "{\u003cbr/\u003eopenid:openid\u003cbr/\u003e}",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WxConfigForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "\"{\u003cbr/\u003e\"appid\":\"微信公众平台的AppID\"\u003cbr/\u003e,\"secret\":\"微信公众平台的AppSecret\"\u003cbr/\u003e}"
+                    },
+                    "403": {
+                        "description": ":openid is empty"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1238,6 +1449,21 @@
                 }
             }
         },
+        "models.AddOpinionsForm": {
+            "title": "AddOpinionsForm",
+            "type": "object",
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "opinions": {
+                    "type": "string"
+                }
+            }
+        },
         "models.AddconcernForm": {
             "title": "AddconcernForm",
             "type": "object",
@@ -1254,6 +1480,9 @@
             "title": "AgreeLibraryrequestForm",
             "type": "object",
             "properties": {
+                "bookqid": {
+                    "type": "string"
+                },
                 "newid": {
                     "type": "string"
                 },
@@ -1286,9 +1515,6 @@
             "title": "BookStateForm",
             "type": "object",
             "properties": {
-                "book_state": {
-                    "type": "string"
-                },
                 "bookqid": {
                     "type": "array",
                     "items": {
@@ -1301,7 +1527,7 @@
             "title": "BookaddForm",
             "type": "object",
             "properties": {
-                "auhtor": {
+                "author": {
                     "type": "string"
                 },
                 "bookname": {
@@ -1333,9 +1559,6 @@
                 "state": {
                     "type": "integer",
                     "format": "int32"
-                },
-                "userid": {
-                    "type": "string"
                 }
             }
         },
@@ -1427,6 +1650,9 @@
                     "type": "integer",
                     "format": "int64"
                 },
+                "logintime": {
+                    "type": "string"
+                },
                 "radius": {
                     "type": "string"
                 }
@@ -1517,9 +1743,6 @@
                 "length": {
                     "type": "integer",
                     "format": "int64"
-                },
-                "order_state": {
-                    "type": "string"
                 }
             }
         },
@@ -1539,9 +1762,6 @@
                 "draw": {
                     "type": "integer",
                     "format": "int64"
-                },
-                "isbn": {
-                    "type": "string"
                 },
                 "length": {
                     "type": "integer",
@@ -1569,6 +1789,27 @@
             "type": "object",
             "properties": {
                 "newid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SmsCheckForm": {
+            "title": "SmsCheckForm",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "telphone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SmsForm": {
+            "title": "SmsForm",
+            "type": "object",
+            "properties": {
+                "telphone": {
                     "type": "string"
                 }
             }
@@ -1626,6 +1867,9 @@
                 "telphone": {
                     "type": "string"
                 },
+                "wechat": {
+                    "type": "string"
+                },
                 "weibo": {
                     "type": "string"
                 },
@@ -1641,13 +1885,86 @@
             "title": "UserinfoForm",
             "type": "object",
             "properties": {
+                "userid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserupdateForm": {
+            "title": "UserupdateForm",
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "constellation": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "imgurl": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number",
+                    "format": "double"
+                },
+                "long": {
+                    "type": "number",
+                    "format": "double"
+                },
                 "nickname": {
+                    "type": "string"
+                },
+                "openid": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "qq": {
+                    "type": "string"
+                },
+                "signature": {
                     "type": "string"
                 },
                 "telphone": {
                     "type": "string"
                 },
-                "userid": {
+                "wechat": {
+                    "type": "string"
+                },
+                "weibo": {
+                    "type": "string"
+                },
+                "wimgurl": {
+                    "type": "string"
+                },
+                "wnickname": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WxConfigForm": {
+            "title": "WxConfigForm",
+            "type": "object",
+            "properties": {
+                "url": {
                     "type": "string"
                 }
             }
@@ -1657,6 +1974,10 @@
         {
             "name": "users",
             "description": "User API\n"
+        },
+        {
+            "name": "wechat",
+            "description": "Wechat API\n"
         },
         {
             "name": "app",

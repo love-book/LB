@@ -3,12 +3,17 @@ package controllers
 import (
 	"github.com/astaxie/beego"
 	comm "common/conndatabase"
+	"github.com/garyburd/redigo/redis"
 	"models"
 	"time"
 	"fmt"
 	"common"
 	"encoding/json"
-	//mq "common/rabbitmq"
+	"common/wechat"
+	"strconv"
+	"os"
+	"strings"
+	"os/exec"
 )
 
 // App API
@@ -54,11 +59,11 @@ func (this *AppController) Useradd() {
 	}
 	this.Rsp(true,"成功!",&user)
 }
-// 用户登录
+
 // @Title  用户登录获取token
 // @Summary  用户登录获取token
 // @Description 用户登录获取token
-// @Param	body	body  models.LoginForm	true  "{<br/>"telphone":"手机号",<br/>"password":"密码"<br/>}
+// @Param	body	body  models.LoginForm	true  {<br/>"telphone":"手机号",<br/>"password":"密码"<br/>}
 // @Success 200  {<br/>oX8vKwqsI52Me2J2kCTkkYNohHfQ<br/>oX8vKwueTHOC3wrUkm2eJBnm-m6A<br/>}
 // @Failure 403 :openid is empty
 // @router /login [post]
@@ -73,7 +78,7 @@ func (this *AppController) Login()  {
 	pass:= models.Md5([]byte(password))
 	u,err:=models.GetUsersBypass([]string{telphone,pass})
 	if err==nil{
-		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.City)
+		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.Imgurl+";"+u.Nickname)
 		if 0 == len(token) {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")
@@ -84,12 +89,12 @@ func (this *AppController) Login()  {
 		this.Rsp(false,"不存在当前用户!","")
 	}
 }
-// openid获取token
-// @Title    openid获取token
-// @Summary  openid获取token
-// @Description openid获取token
-// @Param	body	body  models.AccesstokenForm  true  "{<br/>"openid":"openid"<br/>}
-// @Success 200  {<br/> token}
+
+// @Title          openid获取token
+// @Summary        openid获取token
+// @Description    openid获取token
+// @Param	body   body  models.AccesstokenForm  true  {<br/>"openid":"openid"<br/>}
+// @Success 200   {<br/> token <br/>}
 // @Failure 403 :openid is empty
 // @router /accesstoken [post]
 func (this *AppController) Accesstoken()  {
@@ -100,7 +105,7 @@ func (this *AppController) Accesstoken()  {
 	}
 	u,err:=models.GetUsersByOpenId([]string{ob.Openid})
 	if err==nil{
-		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.City)
+		token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.Imgurl+";"+u.Nickname)
 		if 0 == len(token) {
 			fmt.Println(token,err.Error())
 			this.Rsp(false,"登录失败!","")
@@ -111,16 +116,177 @@ func (this *AppController) Accesstoken()  {
 		this.Rsp(false,"不存在当前用户!","")
 	}
 }
-// openid       获取微信公众号信息
-// @Title       获取微信公众号信息
-// @Summary     获取微信公众号信息
-// @Description 获取微信公众号信息
-// @Success 200 "{<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}
+// @Title         获取微信JSDK签名信息
+// @Summary       获取微信JSDK签名信息
+// @Description   获取微信JSDK签名信息
+// @Param	body  body  models.WxConfigForm  true  {<br/>"openid":"openid"<br/>}
+// @Success 200   {<br/>"appid":"微信公众平台的AppID"<br/>,"secret":"微信公众平台的AppSecret"<br/>}
 // @Failure 403 :openid is empty
-// @router /getwxaccount [post]
-func (this *AppController) Getwxaccount()  {
+// @router /getwxconfig [post]
+func (this *AppController) Getwxconfig()  {
+	var ob  *models.WxConfigForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if  ob.Url ==""{
+		this.Rsp(false,"提交参数错误!","")
+	}
+	token  :=  beego.AppConfig.String("token") // 微信公众平台的Token
 	appid  :=  beego.AppConfig.String("appid")  // 微信公众平台的AppID
 	secret :=  beego.AppConfig.String("secret")  // 微信公众平台的AppSecret
-	account := &map[string]string{"appid":appid,"secret":secret}
-	this.Rsp(true,"成功!",&account)
+	mp := wechat.New(token, appid, secret)
+	jsapi_ticket,_:=mp.TicketToken.Fresh()
+	t:= strconv.FormatInt(time.Now().Unix(), 10)
+	conf:= map[string]string{
+		"noncestr":"ARTWm3WZYTPz0wzccnW",
+		"timestamp":t,
+		"jsapi_ticket":jsapi_ticket,
+		"url":ob.Url,
+	}
+	wxConf := mp.GetSignature(conf)
+	this.Rsp(true,"成功!",&wxConf)
+}
+
+
+// @Title         根据微信授权code获取用户token
+// @Summary       根据微信授权code获取用户token
+// @Description   根据微信授权code获取用户token
+// @Param	code  formData  string  true  code
+// @Success 200   {<br/>"data":"根据微信授权code获取用户token"<br/>}
+// @Failure 403 :openid is empty
+// @router /getusertokenbycode [post]
+func (this *AppController) Getusertokenbycode()  {
+	/*var ob  *models.WxcodeForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	if  ob.Code ==""{
+		this.Rsp(false,"提交参数错误!","")
+	}*/
+	code:=this.GetString("code")
+	if  code ==""{
+		this.Rsp(false,"提交参数错误!","")
+	}
+	appid  :=  beego.AppConfig.String("appid")  // 微信公众平台的AppID
+	secret :=  beego.AppConfig.String("secret")  // 微信公众平台的AppSecret
+	mp := wechat.NewUseracesstoken(appid, secret,code)
+	//获取用户openid
+	fetchRespose,err:= mp.Fetch()
+	if err !=nil{
+		this.Rsp(false,"失败!",err.Error())
+	}
+	//判断数据库是否有该用户信息,没有则需要注册一个用户
+	openid := []string{fetchRespose.Openid}
+	u,err :=models.GetUsersByOpenId(openid)
+	if err != nil {
+		 //获取微信用户信息
+		 if fetchRespose.Scope == "snsapi_userinfo"{
+			 mp.Openid =fetchRespose.Openid
+			 mp.AccessToken = fetchRespose.AccessToken
+			 info,err:=mp.GetUserinfo()
+            if err!=nil{
+				this.Rsp(false,"失败!",err.Error())
+			}
+			t:= time.Now().Unix()
+			id    :=  models.GetID()
+			uid   :=  fmt.Sprintf("%d", id)
+			u = &models.Users{
+				Userid  :uid,
+				Openid  :info.Openid,
+				Wnickname:info.Nickname,
+				Wimgurl :info.Headimgurl,
+				Nickname:info.Nickname,
+				Imgurl  :info.Headimgurl,
+				Gender  :info.Sex,
+				Age   	:1,
+				Signature :"暂未设置",
+				Constellation :"暂未设置",
+				Province  	:info.Province,
+				City  	   :info.City,
+				Logintime	:t,
+				Created_at :t,
+				Updated_at  :t,
+			}
+			if _,err:=models.AddUsers(u);err!=nil{
+				 this.Rsp(false,"失败!",err.Error())
+			}
+		 }
+	}
+	token,err := common.SetToken(u.Userid+";"+u.Openid+";"+u.Province+";"+u.Imgurl+";"+u.Nickname)
+	this.Rsp(true,"成功!",&token)
+}
+
+
+
+
+// @Title    手机号获取验证码
+// @Summary  手机号获取验证码
+// @Description 手机号获取验证码
+// @Param	body	body  models.SmsForm	true  {<br/>"telphone":"手机号"<br/>}
+// @Success 200     {}
+// @Failure 403     :openid is empty
+// @router /phonecode [post]
+func (this *AppController) Phonecode(){
+	var ob  *models.SmsForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	telphone := ob.Telphone
+	if telphone =="" {
+		this.Rsp(false,"提交参数错误!","")
+	}
+	code := GetPhoneCode(6)
+	pwd,_:= os.Getwd()
+	fmt.Println(pwd)
+	//先进入 src\common\aliyun\core 目录执行 python setup.py install
+	//然后进入src\common\aliyun\dysmsapi 目录执行 python sms.py 18515422930 678543 测试
+	py:= pwd+"/../common/aliyun/dysmsapi/sms.py"
+	v:="python "+py+" "+telphone+" "+code
+	fmt.Println(v)
+	args := strings.Split(v, " ")
+	cmd := exec.Command(args[0], args[1:]...)
+	buf, err := cmd.Output()
+	if err == nil{
+		Msg := struct {
+			Message   string
+			RequestId string
+			Code      string
+		}{}
+		err:=json.Unmarshal(buf,&Msg)
+		fmt.Println(Msg)
+		if err!=nil{
+			this.Rsp(false,"失败,请稍后重试!","")
+		}
+        if Msg.Message!="OK"{
+			this.Rsp(false,Msg.Message,"")
+		}
+		rc := comm.Pool.Get()
+		defer rc.Close()
+		//缓存验证码十分钟
+		rc.Do("SETEX",telphone,60*10,code)
+		this.Rsp(true,"成功!","")
+	}
+	fmt.Printf("%s\n%s",buf,err)
+	this.Rsp(false,"失败!","")
+}
+
+
+
+// @Title    手机号验证验证码
+// @Summary  手机号验证验证码
+// @Description 手机号验证验证码
+// @Param	body	body  models.SmsCheckForm  true  {<br/>"telphone":"手机号"<br/>"code":"验证码"<br/>}
+// @Success 200     {}
+// @Failure 403     :openid is empty
+// @router /checkphonecode [post]
+func (this *AppController) Checkponecode(){
+	var ob  *models.SmsCheckForm
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+	telphone := ob.Telphone
+	phonecode := ob.Code
+	if telphone =="" || phonecode==""{
+		this.Rsp(false,"提交参数错误!","")
+	}
+	rc := comm.Pool.Get()
+	defer rc.Close()
+	code,err:=redis.String(rc.Do("GET",telphone))
+	fmt.Println(err)
+	if code == phonecode{
+		this.Rsp(true,"成功!",code)
+	}
+	this.Rsp(false,"失败!","")
 }

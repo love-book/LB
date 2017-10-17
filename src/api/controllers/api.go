@@ -15,12 +15,15 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"net/http"
 	"encoding/base64"
+	"math/rand"
 )
 
 type ApiController struct {
 	Userid string
 	Openid string
 	Province string
+	Imgurl   string
+	Nickname string
 	beego.Controller
 }
 
@@ -38,10 +41,14 @@ func (this *ApiController) SetUserId() {
 		this.Userid   = split[0]
 		this.Openid   = split[1]
 		this.Province = split[2]
+		this.Imgurl   = split[3]
+		this.Nickname = split[4]
 	}else{
 		this.Userid   =  ""
 		this.Openid   =  ""
 		this.Province =  ""
+		this.Imgurl   =  ""
+		this.Nickname =  ""
 	}
 }
 
@@ -65,7 +72,19 @@ func  repeatCommit(m interface{}) (err error){
 	}
 	return
 }
-
+//获取验证码
+func GetPhoneCode(size int)string{
+	result:=map[int]string{
+		1:"1",2:"2",3:"3",4:"4",
+		5:"5",6:"6",7:"7",8:"8",9:"9",
+	}
+	var temp string = ""
+	for i:=0 ; i<size ;  {
+		temp += string(result[rand.Intn(9)])
+		i++
+	}
+	return temp
+}
 
 func (this *ApiController) Rsp(status bool, msg string,data interface{}) {
 	this.Data["json"] = &map[string]interface{}{"status": status, "msg": msg,"data":data}
@@ -90,7 +109,7 @@ func (this *ApiController) Index() {
 	// 文本消息
 	if mp.Request.MsgType == wechat.MsgTypeText {
 		// 回复消息
-		mp.ReplyTextMsg(this.Ctx.ResponseWriter, "Hello, 世界")
+		mp.ReplyTextMsg(this.Ctx.ResponseWriter, "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa54fdefbe87687f7&redirect_uri=http://api.kasoly.com/&response_type=code&scope=snsapi_userinfo&state=123#wechat_redirect")
 	}
 	// 图片消息
 	if mp.Request.MsgType == wechat.MsgTypeImage {
